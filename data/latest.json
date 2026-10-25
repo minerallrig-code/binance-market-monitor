@@ -1,24 +1,24 @@
 {
-  "generated_at": "2026-10-25T11:20:07.404439+00:00",
+  "generated_at": "2026-10-25T11:46:19.876869+00:00",
   "disclaimer": "Analytics only. No orders are placed or modified.",
   "markets": {
     "spot": {
       "BTCUSDT": {
         "15m": {
-          "candle_time": "2026-10-25T11:00:00+00:00",
-          "close": 80337.28,
-          "ema20": 80435.29757328339,
-          "ema50": 80549.1895957902,
-          "rsi14": 42.17868710233705,
+          "candle_time": "2026-10-25T11:30:00+00:00",
+          "close": 80534.39,
+          "ema20": 80442.85928334316,
+          "ema50": 80543.49899156146,
+          "rsi14": 52.82689663739974,
           "macd": {
-            "line": -106.96048420888837,
-            "signal": -104.42630635680158,
-            "histogram": -2.534177852086799
+            "line": -75.60899209171475,
+            "signal": -97.21816241196818,
+            "histogram": 21.609170320253426
           },
-          "volume": 35.90268,
-          "volume_avg20": 55.254544499999994,
-          "volume_ratio_20": 0.6497688167531632,
-          "signal": "SHORT"
+          "volume": 53.4239,
+          "volume_avg20": 54.616530999999995,
+          "volume_ratio_20": 0.9781635527163014,
+          "signal": "WAIT"
         },
         "4h": {
           "candle_time": "2026-10-25T04:00:00+00:00",
@@ -39,20 +39,20 @@
       },
       "SOLUSDT": {
         "15m": {
-          "candle_time": "2026-10-25T11:00:00+00:00",
-          "close": 100.77,
-          "ema20": 101.13903257712917,
-          "ema50": 101.49237266633826,
-          "rsi14": 34.59342328531892,
+          "candle_time": "2026-10-25T11:30:00+00:00",
+          "close": 101.14,
+          "ema20": 101.11163437719028,
+          "ema50": 101.45322282190962,
+          "rsi14": 47.200824370836024,
           "macd": {
-            "line": -0.33567034713883004,
-            "signal": -0.32126400991274395,
-            "histogram": -0.014406337226086086
+            "line": -0.2773201151642155,
+            "signal": -0.31216204435177025,
+            "histogram": 0.03484192918755474
           },
-          "volume": 10400.062,
-          "volume_avg20": 8446.55215,
-          "volume_ratio_20": 1.231278966293957,
-          "signal": "SHORT"
+          "volume": 9248.896,
+          "volume_avg20": 8504.862700000001,
+          "volume_ratio_20": 1.0874832817700866,
+          "signal": "WAIT"
         },
         "4h": {
           "candle_time": "2026-10-25T04:00:00+00:00",
@@ -73,19 +73,19 @@
       },
       "ZECUSDT": {
         "15m": {
-          "candle_time": "2026-10-25T11:00:00+00:00",
-          "close": 1192.74,
-          "ema20": 1191.7963028039455,
-          "ema50": 1194.9810587215698,
-          "rsi14": 48.86193260020913,
+          "candle_time": "2026-10-25T11:30:00+00:00",
+          "close": 1208.55,
+          "ema20": 1193.6446832476074,
+          "ema50": 1195.5037456430896,
+          "rsi14": 63.88272778543325,
           "macd": {
-            "line": -4.270802945123705,
-            "signal": -4.865839004657992,
-            "histogram": 0.5950360595342863
+            "line": -1.7738729658938155,
+            "signal": -4.030727668740525,
+            "histogram": 2.2568547028467094
           },
-          "volume": 915.794,
-          "volume_avg20": 611.5326,
-          "volume_ratio_20": 1.4975391336455326,
+          "volume": 723.832,
+          "volume_avg20": 642.0848,
+          "volume_ratio_20": 1.1273152705063256,
           "signal": "WAIT"
         },
         "4h": {
@@ -107,19 +107,19 @@
       },
       "HYPEUSDT": {
         "15m": {
-          "candle_time": "2026-10-25T11:00:00+00:00",
-          "close": 75.82,
-          "ema20": 75.90223323179168,
-          "ema50": 76.11337702303695,
-          "rsi14": 45.210952915166864,
+          "candle_time": "2026-10-25T11:30:00+00:00",
+          "close": 76.27,
+          "ema20": 75.94051291762925,
+          "ema50": 76.11298556201227,
+          "rsi14": 57.263358455084266,
           "macd": {
-            "line": -0.17636192567913156,
-            "signal": -0.18810690293620014,
-            "histogram": 0.011744977257068578
+            "line": -0.1044052952096024,
+            "signal": -0.16554877752006672,
+            "histogram": 0.06114348231046432
           },
-          "volume": 1376.192,
-          "volume_avg20": 1805.9728,
-          "volume_ratio_20": 0.7620225509487186,
+          "volume": 986.331,
+          "volume_avg20": 1849.4553500000002,
+          "volume_ratio_20": 0.5333089009150721,
           "signal": "WAIT"
         },
         "4h": {
@@ -141,20 +141,20 @@
       },
       "WLDUSDT": {
         "15m": {
-          "candle_time": "2026-10-25T11:00:00+00:00",
-          "close": 0.4453,
-          "ema20": 0.4517654437405843,
-          "ema50": 0.4590979299855437,
-          "rsi14": 33.70050804285914,
+          "candle_time": "2026-10-25T11:30:00+00:00",
+          "close": 0.4479,
+          "ema20": 0.45083157639525606,
+          "ema50": 0.45813532452881606,
+          "rsi14": 39.906359357164035,
           "macd": {
-            "line": -0.006033786074179426,
-            "signal": -0.005412309581761172,
-            "histogram": -0.0006214764924182539
+            "line": -0.005342453066270125,
+            "signal": -0.005461009817565235,
+            "histogram": 0.00011855675129511002
           },
-          "volume": 729084.6,
-          "volume_avg20": 1176472.4300000002,
-          "volume_ratio_20": 0.6197209398268686,
-          "signal": "SHORT"
+          "volume": 438407.5,
+          "volume_avg20": 1157500.365,
+          "volume_ratio_20": 0.3787536602634246,
+          "signal": "WAIT"
         },
         "4h": {
           "candle_time": "2026-10-25T04:00:00+00:00",
@@ -173,70 +173,7 @@
           "signal": "SHORT"
         }
       }
-    },
-    "usdm_futures": {
-      "BTCUSDT": {
-        "15m": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        },
-        "4h": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        }
-      },
-      "SOLUSDT": {
-        "15m": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        },
-        "4h": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        }
-      },
-      "ZECUSDT": {
-        "15m": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        },
-        "4h": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        }
-      },
-      "HYPEUSDT": {
-        "15m": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        },
-        "4h": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        }
-      },
-      "WLDUSDT": {
-        "15m": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        },
-        "4h": {
-          "signal": "UNAVAILABLE",
-          "error": "HTTP Error 451: "
-        }
-      }
     }
   },
-  "errors": [
-    "usdm_futures BTCUSDT 15m: HTTPError: HTTP Error 451: ",
-    "usdm_futures BTCUSDT 4h: HTTPError: HTTP Error 451: ",
-    "usdm_futures SOLUSDT 15m: HTTPError: HTTP Error 451: ",
-    "usdm_futures SOLUSDT 4h: HTTPError: HTTP Error 451: ",
-    "usdm_futures ZECUSDT 15m: HTTPError: HTTP Error 451: ",
-    "usdm_futures ZECUSDT 4h: HTTPError: HTTP Error 451: ",
-    "usdm_futures HYPEUSDT 15m: HTTPError: HTTP Error 451: ",
-    "usdm_futures HYPEUSDT 4h: HTTPError: HTTP Error 451: ",
-    "usdm_futures WLDUSDT 15m: HTTPError: HTTP Error 451: ",
-    "usdm_futures WLDUSDT 4h: HTTPError: HTTP Error 451: "
-  ]
+  "errors": []
 }
