@@ -12,7 +12,6 @@ SYMBOLS = ["BTCUSDT", "SOLUSDT", "ZECUSDT", "HYPEUSDT", "WLDUSDT"]
 INTERVALS = ["15m", "4h"]
 LIMIT = 250
 SPOT_BASE = "https://data-api.binance.vision"
-FUTURES_BASE = "https://fapi.binance.com"
 
 
 def fetch_klines(base, market, symbol, interval):
@@ -108,7 +107,7 @@ def main():
         "markets": {},
         "errors": [],
     }
-    for market, base in (("spot", SPOT_BASE), ("usdm_futures", FUTURES_BASE)):
+    for market, base in (("spot", SPOT_BASE),):
         result["markets"][market] = {}
         for symbol in SYMBOLS:
             result["markets"][market][symbol] = {}
