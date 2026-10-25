@@ -1,12 +1,13 @@
 # Binance Market Monitor
 
-Read-only Binance Spot and USD-M Futures analytics for BTCUSDT, SOLUSDT, ZECUSDT, HYPEUSDT and WLDUSDT.
+Read-only Binance Spot analytics for BTCUSDT, SOLUSDT, ZECUSDT, HYPEUSDT and WLDUSDT.
 
 ## Features
 - 15m and 4h closed candles
 - EMA 20/50, RSI 14, MACD (12, 26, 9)
 - Volume and ratio versus the previous 20 closed candles
 - LONG / SHORT / WAIT signals; UNAVAILABLE when an API request fails
+- Spot-only market data; no Futures API requests
 - Latest snapshot: `data/latest.json`
 
 ## Run
@@ -21,4 +22,4 @@ Runs every 15 minutes (UTC), with manual execution available under Actions. The 
 LONG requires EMA20 above EMA50, close above EMA20, RSI 50-70 and positive MACD histogram. SHORT requires EMA20 below EMA50, close below EMA20, RSI 30-50 and negative MACD histogram. Otherwise WAIT. These are analytical filters, not financial advice or guaranteed trade entries.
 
 ## Safety
-Public market data only. This project does not use wallet credentials, place orders, cancel orders or modify positions.
+Public Binance Spot market data only. No Futures data is used. This project does not use wallet credentials, place orders, cancel orders or modify positions.
