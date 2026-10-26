@@ -32,7 +32,7 @@ python -m unittest discover -s tests -v
 python backtest.py --days 30
 ```
 
-Outputs: `data/latest.json` and `data/backtest_latest.json`. The backtest fetches historical Bybit candles and evaluates the same LONG classifier; it enters at the next 5m open, uses an ATR(14) stop (1.5x), a 2R target, and includes configured taker fees, adverse slippage, and hourly funding. It uses a conservative stop-first rule if stop and target are both touched in one candle. Funding is a fixed stress assumption, not actual historical funding.
+Outputs: `data/latest.json` and `data/backtest_latest.json`. The backtest fetches historical Bybit candles and evaluates the same LONG classifier. Set `BYBIT_API_BASE_URL` if your permitted Bybit account region uses a dedicated official API host. GitHub-hosted runners can receive HTTP 403 because Bybit restricts API access from US and Mainland China IP addresses; run the historical test from an allowed region (for example, the user's Singapore-region Render service), not through a proxy or region bypass; it enters at the next 5m open, uses an ATR(14) stop (1.5x), a 2R target, and includes configured taker fees, adverse slippage, and hourly funding. It uses a conservative stop-first rule if stop and target are both touched in one candle. Funding is a fixed stress assumption, not actual historical funding.
 
 ## GitHub Actions
 The workflow is configured for a manual run and a 15-minute schedule on the `bybit-long-v1` branch. It runs the monitor and unit tests, then commits the refreshed snapshot to that branch. Scheduled runs require this workflow to be merged into the repository's default branch or otherwise enabled there; this feature branch alone does not guarantee scheduled execution.
