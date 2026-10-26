@@ -1,0 +1,10 @@
+services:
+  - type: cron
+    name: bybit-long-monitor
+    runtime: python
+    plan: 0.5c-512mb
+    region: singapore
+    branch: bybit-long-v1
+    schedule: "*/15 * * * *"
+    buildCommand: "python -m compileall -q monitor.py backtest.py tests"
+    startCommand: "python monitor.py"
