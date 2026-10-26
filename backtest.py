@@ -8,6 +8,7 @@ hourly funding paid by longs, ATR stop, 2R target, stop-first on ambiguous bars.
 import argparse
 import json
 import math
+import os
 import time
 import urllib.parse
 import urllib.request
