@@ -134,7 +134,7 @@ def run_backtest(days=30):
     for tf, rows in candles.items():
         if len(rows) < 80:
             raise RuntimeError(f"Insufficient {tf} history ({len(rows)} candles); refusing to report a result")
-    times = {tf: [r["time"] for r in rows] for tf, rows in candles.items()}
+    close_times = {tf: [r["close_time"] for r in rows] for tf, rows in candles.items()}
     trades = []
     next_free_ms = 0
     # A decision is made only after a closed 1h candle; entry is the next 5m open.
@@ -144,8 +144,8 @@ def run_backtest(days=30):
         signal_time = h1[-1]["close_time"]
         if signal_time < next_free_ms:
             continue
-        j15 = bisect.bisect_right(times["15m"], signal_time)
-        j5 = bisect.bisect_right(times["5m"], signal_time)
+        j15 = bisect.bisect_right(close_times["15m"], signal_time)
+        j5 = bisect.bisect_right(close_times["5m"], signal_time)
         if j15 < 60 or j5 < 60 or j5 >= len(candles["5m"]):
             continue
         snapshots = {
