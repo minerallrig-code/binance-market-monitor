@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Read-only Bybit USDT linear futures monitor. Never places or modifies orders."""
 import json
-import math
 import os
 import time
 import urllib.parse
@@ -139,7 +138,9 @@ def classify_long(data):
     # Reversal candidate after a sharp 1h decline; requires lower-TF confirmation.
     h1_drop = ((h1["close"] / h1["swing_high_50"]) - 1) if h1["swing_high_50"] else 0
     seller_spike = h1["volume_vs_ma10"] if "volume_vs_ma10" in h1 else None
+    seller_spike_ok = seller_spike is not None and seller_spike >= 1.5
     reversal = (h1_drop <= -0.015
+                and seller_spike_ok
                 and h1["macd"]["histogram_rising"]
                 and m5["macd"]["histogram_rising"]
                 and m5["rsi6"] is not None and m5["rsi6"] >= 35
@@ -162,6 +163,7 @@ def classify_long(data):
             "15m_volume_ok": volume_ok,
             "5m_early_confirmation": early,
             "1h_drop_from_50_candle_high": h1_drop,
+            "1h_seller_volume_spike": seller_spike_ok,
             "1h_macd_histogram_rising": h1["macd"]["histogram_rising"],
         },
         "note": "Candidate only. Verify live Walt balance/positions and calculate SL/TP; no orders are sent.",
