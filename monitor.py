@@ -73,14 +73,28 @@ def rsi(values, period):
 
 
 def macd(values):
+    """MACD with linear-time EMA passes; suitable for repeated historical analysis."""
     if len(values) < 35:
         return None
-    line = []
-    for end in range(26, len(values) + 1):
-        line.append(ema(values[:end], 12) - ema(values[:end], 26))
+
+    def ema_series(items, period):
+        if len(items) < period:
+            return []
+        alpha = 2.0 / (period + 1)
+        current = sum(items[:period]) / period
+        output = [None] * (period - 1) + [current]
+        for item in items[period:]:
+            current = item * alpha + current * (1 - alpha)
+            output.append(current)
+        return output
+
+    fast = ema_series(values, 12)
+    slow = ema_series(values, 26)
+    line = [fast[i] - slow[i] for i in range(25, len(values))]
     signal = ema(line, 9)
     hist = line[-1] - signal if signal is not None else None
-    previous_hist = line[-2] - ema(line[:-1], 9) if len(line) > 1 and len(line[:-1]) >= 9 else None
+    previous_signal = ema(line[:-1], 9) if len(line) > 1 else None
+    previous_hist = line[-2] - previous_signal if previous_signal is not None else None
     return {"dif": line[-1], "dea": signal, "histogram": hist,
             "histogram_previous": previous_hist,
             "histogram_rising": hist is not None and previous_hist is not None and hist > previous_hist}
