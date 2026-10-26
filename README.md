@@ -29,6 +29,7 @@ Python 3.12+. Standard library only.
 ```bash
 python monitor.py
 python -m unittest discover -s tests -v
+python backtest.py --days 30
 ```
 
 Outputs: `data/latest.json` and `data/backtest_latest.json`. The backtest fetches historical Bybit candles and evaluates the same LONG classifier; it enters at the next 5m open, uses an ATR(14) stop (1.5x), a 2R target, and includes configured taker fees, adverse slippage, and hourly funding. It uses a conservative stop-first rule if stop and target are both touched in one candle. Funding is a fixed stress assumption, not actual historical funding.
