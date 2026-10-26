@@ -1,42 +1,42 @@
-name: Bybit Futures Market Monitor
+name: Bybit BTCUSDT LONG Monitor
 
 on:
-  push:
-    paths:
-      - "bybit_monitor.py"
-      - "backtest_yesterday.py"
-      - ".github/workflows/bybit-monitor.yml"
+  workflow_dispatch:
   schedule:
     - cron: "*/15 * * * *"
-  workflow_dispatch:
 
 permissions:
   contents: write
 
 concurrency:
-  group: bybit-market-monitor
+  group: bybit-btc-long-monitor
   cancel-in-progress: true
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Checkout repository
+      - name: Check out strategy branch
         uses: actions/checkout@v4
+        with:
+          ref: bybit-long-v1
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Fetch closed Bybit candles and calculate signals
-        run: python bybit_monitor.py
-      - name: Backtest yesterday strategy
-        run: python backtest_yesterday.py
-      - name: Commit latest Bybit snapshot
+      - name: Run read-only Bybit monitor
+        run: python monitor.py
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -v
+      - name: Commit latest snapshot
         run: |
+          if git diff --quiet -- data/latest.json; then
+            echo "No snapshot changes."
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/bybit_latest.json data/strategy_backtest_yesterday.json
-          if ! git diff --cached --quiet; then
-            git commit -m "Update Bybit market snapshot"
-            git push
-          fi
+          git add data/latest.json
+          git commit -m "Update Bybit BTCUSDT market snapshot"
+          git push origin HEAD:bybit-long-v1
