@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 
 import monitor
 
-BASE = "https://api.bybit.com"
+BASE = os.environ.get("BYBIT_API_BASE_URL", "https://api.bybit.com").rstrip("/")
 SYMBOL = "BTCUSDT"
 CATEGORY = "linear"
 FEE_RATE = 0.0009       # taker fee per side; conservative configured assumption
