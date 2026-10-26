@@ -8,10 +8,10 @@ import urllib.request
 from datetime import datetime, timezone
 
 SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT"]
-INTERVALS = {"1h": "60", "15m": "15"}
+INTERVALS = {"1h": "60", "15m": "15", "5m": "5"}
 BYBIT_HOSTS = ["https://api.bybit.com", "https://api.bytick.com"]
 OKX_INST = {"BTCUSDT": "BTC-USDT-SWAP", "ETHUSDT": "ETH-USDT-SWAP", "SOLUSDT": "SOL-USDT-SWAP"}
-OKX_BAR = {"1h": "1H", "15m": "15m"}
+OKX_BAR = {"1h": "1H", "15m": "15m", "5m": "5m"}
 LIMIT = 250
 ERRORS = []
 
@@ -138,9 +138,9 @@ def analyze(candles):
     avg_volume = sum(volumes[-21:-1]) / 20
     return {
         "candle_time": datetime.fromtimestamp(candles[-1]["time"] / 1000, timezone.utc).isoformat(),
-        "close": closes[-1], "ema20": e20, "ema50": e50, "rsi14": r,
-        "macd": m, "volume": volumes[-1], "volume_avg20": avg_volume,
-        "volume_ratio_20": volumes[-1] / avg_volume if avg_volume else None,
+        "close": closes[-1], "ema20": e20, "ema50": e50, "rsi6": rsi(closes, 6), "rsi12": rsi(closes, 12), "rsi14": r, "rsi24": rsi(closes, 24),
+        "macd": m, "volume": volumes[-1], "volume_avg20": avg_volume, "volume_ma5": sum(volumes[-6:-1]) / 5, "volume_ma10": sum(volumes[-11:-1]) / 10,
+        "volume_ratio_20": volumes[-1] / avg_volume if avg_volume else None, "volume_ratio_ma5": volumes[-1] / (sum(volumes[-6:-1]) / 5) if sum(volumes[-6:-1]) else None, "volume_ratio_ma10": volumes[-1] / (sum(volumes[-11:-1]) / 10) if sum(volumes[-11:-1]) else None,
     }
 
 
@@ -149,7 +149,7 @@ def main():
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "primary_exchange": "Bybit", "fallback_exchange": "OKX",
         "market": "USDT perpetual swaps",
-        "strategy": "LONG only; 1h trend + 15m confirmation; confirmed/closed candles only",
+        "strategy": "LONG only; 1h trend + 15m confirmation + 5m early-turn context; RSI6/12/14/24 and volume MA5/MA10; closed candles only",
         "disclaimer": "Analytics only. No orders are placed, cancelled, or modified. OKX fallback volume is not directly comparable to Bybit volume.",
         "symbols": {}, "errors": ERRORS,
     }
