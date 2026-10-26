@@ -1,6 +1,10 @@
 name: Bybit Futures Market Monitor
 
 on:
+  push:
+    paths:
+      - "bybit_monitor.py"
+      - ".github/workflows/bybit-monitor.yml"
   schedule:
     - cron: "*/15 * * * *"
   workflow_dispatch:
