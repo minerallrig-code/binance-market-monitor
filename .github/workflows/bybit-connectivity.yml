@@ -1,0 +1,41 @@
+name: Bybit API Connectivity Check
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bybit-connectivity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Check public Bybit API reachability (no trading)
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.error
+          import urllib.request
+
+          urls = [
+              "https://api.bybit.com/v5/market/time",
+              "https://api.bybit.com/v5/market/kline?category=linear&symbol=BTCUSDT&interval=60&limit=2",
+          ]
+          for url in urls:
+              print("Checking:", url.split("?")[0])
+              req = urllib.request.Request(url, headers={"User-Agent": "bybit-connectivity-check/1.0"})
+              try:
+                  with urllib.request.urlopen(req, timeout=15) as response:
+                      body = json.loads(response.read().decode("utf-8"))
+                      print("HTTP:", response.status, "retCode:", body.get("retCode"), "retMsg:", body.get("retMsg"))
+                      if response.status != 200 or body.get("retCode") != 0:
+                          raise SystemExit("Bybit API returned an error; do not start the strategy.")
+              except urllib.error.HTTPError as exc:
+                  print("HTTP ERROR:", exc.code, exc.reason)
+                  raise SystemExit("Bybit endpoint is not reachable from this runner.")
+              except Exception as exc:
+                  print(type(exc).__name__ + ":", str(exc))
+                  raise SystemExit("Connectivity check failed; do not start the strategy.")
+          print("RESULT: BYBIT_PUBLIC_API_REACHABLE")
+          PY
