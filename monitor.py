@@ -98,7 +98,9 @@ def analyze(candles):
     e20, e50 = ema(closes, 20), ema(closes, 50)
     macd_data = macd(closes)
     last = candles[-1]
-    volume_ma5, volume_ma10 = mean(volumes[-5:]), mean(volumes[-10:])
+    # Compare the latest closed candle against preceding candles only.
+    volume_ma5 = mean(volumes[-6:-1])
+    volume_ma10 = mean(volumes[-11:-1])
     swing = candles[-50:]
     swing_high = max(c["high"] for c in swing)
     swing_low = min(c["low"] for c in swing)
