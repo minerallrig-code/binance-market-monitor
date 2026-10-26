@@ -1,0 +1,35 @@
+name: Bybit Futures Market Monitor
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: bybit-market-monitor
+  cancel-in-progress: true
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch closed Bybit candles and calculate signals
+        run: python bybit_monitor.py
+      - name: Commit latest Bybit snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/bybit_latest.json
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Bybit market snapshot"
+            git push
+          fi
