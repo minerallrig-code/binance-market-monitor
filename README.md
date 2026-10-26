@@ -1,25 +1,40 @@
-# Binance Market Monitor
+# Bybit BTCUSDT LONG Monitor
 
-Read-only Binance Spot analytics for BTCUSDT, SOLUSDT, ZECUSDT, HYPEUSDT and WLDUSDT.
+Read-only signal monitor for **Bybit USDT Linear Futures**, focused on BTCUSDT. It does not connect to Walt, hold credentials, or place/modify orders.
 
-## Features
-- 15m and 4h closed candles
-- EMA 20/50, RSI 14, MACD (12, 26, 9)
-- Volume and ratio versus the previous 20 closed candles
-- LONG / SHORT / WAIT signals; UNAVAILABLE when an API request fails
-- Spot-only market data; no Futures API requests
-- Latest snapshot: `data/latest.json`
+## Data
+- Public Bybit V5 market endpoint: `/v5/market/kline`, category `linear`
+- Closed candles only: 1H, 15m, 5m
+- Data source is recorded in `data/latest.json`; no silent exchange fallback
+- If any required timeframe fails, the overall decision is `WAIT` (fail-closed)
+
+## Indicators
+- EMA20 / EMA50
+- RSI6, RSI12, RSI14, RSI24
+- MACD(12,26,9), including histogram direction
+- Volume versus MA5 and MA10
+- 50-candle swing high/low and Fibonacci retracements 50%, 61.8%, 78.6%
+
+## LONG scenarios
+A. Trend continuation: 1H EMA20 > EMA50; 15m price/momentum confirmation; volume filter; 5m early confirmation.
+
+B. Reversal after sharp decline: requires a meaningful 1H decline plus improving MACD and 5m/15m confirmation. Oversold RSI or a green candle alone never qualifies.
+
+The classifier returns `LONG_CANDIDATE` or `WAIT`. It is an analytical filter, not an executable trade signal. Before any trade, separately verify Walt balance and open positions, calculate entry/SL/TP and risk, and follow the user's two-confirmation protocol.
 
 ## Run
-Python 3.12+. No dependencies or API keys are required.
+Python 3.12+. Standard library only.
 
-`python monitor.py`
+```bash
+python monitor.py
+```
 
-## GitHub Actions
-Runs every 15 minutes (UTC), with manual execution available under Actions. The workflow commits refreshed `data/latest.json` to the default branch. Actions must have read/write repository permissions, and branch protection must permit the Actions bot to push.
+Output: `data/latest.json`.
 
-## Signal rules
-LONG requires EMA20 above EMA50, close above EMA20, RSI 50-70 and positive MACD histogram. SHORT requires EMA20 below EMA50, close below EMA20, RSI 30-50 and negative MACD histogram. Otherwise WAIT. These are analytical filters, not financial advice or guaranteed trade entries.
-
-## Safety
-Public Binance Spot market data only. No Futures data is used. This project does not use wallet credentials, place orders, cancel orders or modify positions.
+## Safety constraints
+- LONG only; no SHORT signals
+- No order, cancellation, leverage, position, wallet or transfer APIs
+- No secrets or API keys
+- No averaging down logic
+- Incomplete/stale/missing timeframe data => WAIT
+- This repository monitor is not an autonomous trading bot
