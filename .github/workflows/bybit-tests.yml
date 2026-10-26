@@ -8,6 +8,8 @@ on:
       - "backtest.py"
       - "tests/**"
       - ".github/workflows/bybit-tests.yml"
+      - "render.yaml"
+      - "RENDER_SETUP.md"
   workflow_dispatch:
 
 permissions:
