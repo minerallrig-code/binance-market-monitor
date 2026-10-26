@@ -4,7 +4,8 @@ on:
   pull_request:
     branches: [main, master]
     paths:
-      - "monitor.py"\n      - "backtest.py"
+      - "monitor.py"
+      - "backtest.py"
       - "tests/**"
       - ".github/workflows/bybit-tests.yml"
   workflow_dispatch:
