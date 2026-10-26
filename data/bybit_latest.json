@@ -1,0 +1,147 @@
+{
+  "generated_at": "2026-10-26T14:46:16.426605+00:00",
+  "primary_exchange": "Bybit",
+  "fallback_exchange": "OKX",
+  "market": "USDT perpetual swaps",
+  "strategy": "LONG only; 1h trend + 15m confirmation; confirmed/closed candles only",
+  "disclaimer": "Analytics only. No orders are placed, cancelled, or modified. OKX fallback volume is not directly comparable to Bybit volume.",
+  "symbols": {
+    "BTCUSDT": {
+      "1h": {
+        "candle_time": "2026-10-26T13:00:00+00:00",
+        "close": 79663.3,
+        "ema20": 80198.24511555236,
+        "ema50": 80446.38104836344,
+        "rsi14": 38.6514565045019,
+        "macd": {
+          "line": -92.36023140590987,
+          "signal": -102.77125496061132,
+          "histogram": 10.411023554701444,
+          "previous_histogram": 55.07505970632434,
+          "histogram_rising": false
+        },
+        "volume": 9044.03,
+        "volume_avg20": 2192.25621,
+        "volume_ratio_20": 4.125443895994255,
+        "data_source": "OKX fallback",
+        "candles": 249
+      },
+      "15m": {
+        "candle_time": "2026-10-26T14:30:00+00:00",
+        "close": 80025.8,
+        "ema20": 80093.4254695735,
+        "ema50": 80142.15408637197,
+        "rsi14": 47.116420282577415,
+        "macd": {
+          "line": -82.89121836148843,
+          "signal": -28.789356223056153,
+          "histogram": -54.101862138432274,
+          "previous_histogram": -73.87174130349514,
+          "histogram_rising": true
+        },
+        "volume": 1062.4463,
+        "volume_avg20": 867.38927,
+        "volume_ratio_20": 1.2248783063687196,
+        "data_source": "OKX fallback",
+        "candles": 249
+      },
+      "signal": "WAIT",
+      "reason": "No complete long confirmation on closed 1h/15m candles",
+      "volume_caution": "Compare volume with your Bybit chart only when data_source is Bybit."
+    },
+    "ETHUSDT": {
+      "1h": {
+        "candle_time": "2026-10-26T13:00:00+00:00",
+        "close": 2302.52,
+        "ema20": 2326.2793759951774,
+        "ema50": 2340.6150026399423,
+        "rsi14": 37.95494462688793,
+        "macd": {
+          "line": -6.395521502831343,
+          "signal": -6.42409769605811,
+          "histogram": 0.028576193226767188,
+          "previous_histogram": 1.5739945056443538,
+          "histogram_rising": false
+        },
+        "volume": 312508.725,
+        "volume_avg20": 88262.49895000001,
+        "volume_ratio_20": 3.54067388435301,
+        "data_source": "OKX fallback",
+        "candles": 249
+      },
+      "15m": {
+        "candle_time": "2026-10-26T14:30:00+00:00",
+        "close": 2320.03,
+        "ema20": 2319.7460770480952,
+        "ema50": 2322.7103300146173,
+        "rsi14": 49.44779768744054,
+        "macd": {
+          "line": -2.969308638864277,
+          "signal": -1.4954828512059364,
+          "histogram": -1.4738257876583405,
+          "previous_histogram": -2.3294957219460084,
+          "histogram_rising": true
+        },
+        "volume": 31074.264,
+        "volume_avg20": 33275.1639,
+        "volume_ratio_20": 0.9338575789855088,
+        "data_source": "OKX fallback",
+        "candles": 249
+      },
+      "signal": "WAIT",
+      "reason": "No complete long confirmation on closed 1h/15m candles",
+      "volume_caution": "Compare volume with your Bybit chart only when data_source is Bybit."
+    },
+    "SOLUSDT": {
+      "1h": {
+        "candle_time": "2026-10-26T13:00:00+00:00",
+        "close": 100.84,
+        "ema20": 101.25321794199328,
+        "ema50": 101.60156238012085,
+        "rsi14": 45.33940146788926,
+        "macd": {
+          "line": -0.0634755979917685,
+          "signal": -0.10339238390141398,
+          "histogram": 0.03991678590964548,
+          "previous_histogram": 0.08454168992808819,
+          "histogram_rising": false
+        },
+        "volume": 516648.16,
+        "volume_avg20": 269061.2045,
+        "volume_ratio_20": 1.9201882373198103,
+        "data_source": "OKX fallback",
+        "candles": 249
+      },
+      "15m": {
+        "candle_time": "2026-10-26T14:30:00+00:00",
+        "close": 101.66,
+        "ema20": 101.32380489843547,
+        "ema50": 101.24352648451531,
+        "rsi14": 57.07723153686398,
+        "macd": {
+          "line": 0.0483295294658177,
+          "signal": 0.06495827212037783,
+          "histogram": -0.01662874265456013,
+          "previous_histogram": -0.04873153797054909,
+          "histogram_rising": true
+        },
+        "volume": 119338.3,
+        "volume_avg20": 73756.58,
+        "volume_ratio_20": 1.6180020819837362,
+        "data_source": "OKX fallback",
+        "candles": 249
+      },
+      "signal": "WAIT",
+      "reason": "No complete long confirmation on closed 1h/15m candles",
+      "volume_caution": "Compare volume with your Bybit chart only when data_source is Bybit."
+    }
+  },
+  "errors": [
+    "BTCUSDT 1h Bybit: https://api.bybit.com: HTTPError: HTTP Error 403: Forbidden | https://api.bytick.com: HTTPError: HTTP Error 403: Forbidden",
+    "BTCUSDT 15m Bybit: https://api.bybit.com: HTTPError: HTTP Error 403: Forbidden | https://api.bytick.com: HTTPError: HTTP Error 403: Forbidden",
+    "ETHUSDT 1h Bybit: https://api.bybit.com: HTTPError: HTTP Error 403: Forbidden | https://api.bytick.com: HTTPError: HTTP Error 403: Forbidden",
+    "ETHUSDT 15m Bybit: https://api.bybit.com: HTTPError: HTTP Error 403: Forbidden | https://api.bytick.com: HTTPError: HTTP Error 403: Forbidden",
+    "SOLUSDT 1h Bybit: https://api.bybit.com: HTTPError: HTTP Error 403: Forbidden | https://api.bytick.com: HTTPError: HTTP Error 403: Forbidden",
+    "SOLUSDT 15m Bybit: https://api.bybit.com: HTTPError: HTTP Error 403: Forbidden | https://api.bytick.com: HTTPError: HTTP Error 403: Forbidden"
+  ]
+}
