@@ -31,12 +31,9 @@ TARGET_R = 2.0
 MAX_HOLD_HOURS = 12
 
 
-def fetch_history(interval, days, now_ms=None):
-    """Fetch up to 1000 closed candles, paging backwards using Bybit start/end."""
-    now_ms = now_ms or int(time.time() * 1000)
+def fetch_bybit_history(interval, days, now_ms, cutoff):
     duration = int(interval) * 60_000
     cursor = now_ms
-    cutoff = now_ms - days * 86_400_000
     rows = {}
     while cursor > cutoff:
         params = urllib.parse.urlencode({
@@ -69,6 +66,67 @@ def fetch_history(interval, days, now_ms=None):
         cursor = oldest
         time.sleep(0.08)
     return sorted(rows.values(), key=lambda row: row["time"])
+
+
+def fetch_okx_history(interval, days, now_ms, cutoff):
+    """Read-only OKX SWAP history fallback; pages backwards in batches of 300."""
+    bar = {"60": "1H", "15": "15m", "5": "5m"}[str(interval)]
+    inst_id = "BTC-USDT-SWAP"
+    cursor = now_ms
+    rows = {}
+    duration = int(interval) * 60_000
+    while cursor > cutoff:
+        params = urllib.parse.urlencode({
+            "instId": inst_id, "bar": bar, "limit": "300", "after": str(cursor),
+        })
+        req = urllib.request.Request(
+            f"https://www.okx.com/api/v5/market/history-candles?{params}",
+            headers={"User-Agent": "bybit-long-backtest/1.0", "Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=25) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        if payload.get("code") != "0":
+            raise RuntimeError(f"OKX code={payload.get('code')}: {payload.get('msg')}")
+        batch = payload.get("data", [])
+        if not batch:
+            break
+        oldest = min(int(row[0]) for row in batch)
+        for raw in batch:
+            start = int(raw[0])
+            if len(raw) >= 9 and raw[8] == "1" and start + duration <= now_ms and start >= cutoff:
+                rows[start] = {
+                    "time": start, "close_time": start + duration - 1,
+                    "open": float(raw[1]), "high": float(raw[2]),
+                    "low": float(raw[3]), "close": float(raw[4]),
+                    "volume": float(raw[6]), "turnover": float(raw[7]),
+                }
+        if oldest >= cursor or len(batch) < 2:
+            break
+        cursor = oldest
+        time.sleep(0.12)
+    return sorted(rows.values(), key=lambda row: row["time"])
+
+
+def fetch_history(interval, days, now_ms=None):
+    """Fetch closed candles from Bybit, falling back to paginated OKX history."""
+    now_ms = now_ms or int(time.time() * 1000)
+    cutoff = now_ms - days * 86_400_000
+    try:
+        rows = fetch_bybit_history(interval, days, now_ms, cutoff)
+        if len(rows) >= 80:
+            return rows
+        raise RuntimeError(f"Bybit returned insufficient history: {len(rows)} candles")
+    except Exception as bybit_error:
+        try:
+            rows = fetch_okx_history(interval, days, now_ms, cutoff)
+            if len(rows) < 80:
+                raise RuntimeError(f"OKX returned insufficient history: {len(rows)} candles")
+            return rows
+        except Exception as okx_error:
+            raise RuntimeError(
+                f"Bybit history failed ({type(bybit_error).__name__}: {bybit_error}); "
+                f"OKX fallback failed ({type(okx_error).__name__}: {okx_error})"
+            ) from okx_error
 
 
 def atr(candles, period=ATR_PERIOD):
