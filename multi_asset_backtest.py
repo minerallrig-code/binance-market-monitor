@@ -240,8 +240,12 @@ def run(days):
                 idx[tf] = j
             if not ok:
                 continue
-            item = {tf: snapshot(data[symbol][tf][:idx[tf]]) for tf in TIMEFRAMES}
-            item = {"1h": item["1h"], "15m": item["15m"], "5m": item["5m"]}
+            if symbol == "BTCUSDT":
+                item = btc_item.copy()
+                item["15m"] = snapshot(data[symbol]["15m"][:idx["15m"]])
+                item["5m"] = snapshot(data[symbol]["5m"][:idx["5m"]])
+            else:
+                item = {tf: snapshot(data[symbol][tf][:idx[tf]]) for tf in TIMEFRAMES}
             if live.classify_symbol(symbol, item, btc_item) == "LONG":
                 entry_i = idx["5m"]
                 if entry_i >= len(data[symbol]["5m"]):
