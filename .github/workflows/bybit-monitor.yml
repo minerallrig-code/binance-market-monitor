@@ -35,7 +35,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile all monitor and backtest modules
-        run: python -m py_compile bybit_monitor.py monitor.py backtest.py
+        run: python -m py_compile bybit_monitor.py monitor.py backtest.py multi_asset_backtest.py
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
       - name: Run read-only Bybit/OKX market monitor
@@ -44,6 +44,10 @@ jobs:
         run: python backtest.py --days 30 --output data/backtest_30d.json
       - name: Run 90-day historical backtest
         run: python backtest.py --days 90 --output data/backtest_90d.json
+      - name: Run 30-day multi-asset backtest with live classifier
+        run: python multi_asset_backtest.py --days 30 --output data/multi_asset_30d.json
+      - name: Run 90-day multi-asset backtest with live classifier
+        run: python multi_asset_backtest.py --days 90 --output data/multi_asset_90d.json
       - name: Upload monitor and backtest reports
         if: always()
         uses: actions/upload-artifact@v4
