@@ -1,36 +1,47 @@
 #!/usr/bin/env python3
-"""Read-only Binance market monitor. No trading or API keys required."""
+"""Read-only Bybit USDT linear futures monitor. Never places or modifies orders."""
 import json
-import math
 import os
 import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timezone
 
-SYMBOLS = ["BTCUSDT", "SOLUSDT", "ZECUSDT", "HYPEUSDT", "WLDUSDT"]
-INTERVALS = ["15m", "4h"]
-LIMIT = 250
-SPOT_BASE = "https://data-api.binance.vision"
+BASE_URL = "https://api.bybit.com"
+CATEGORY = "linear"
+SYMBOL = "BTCUSDT"
+INTERVALS = {"1h": "60", "15m": "15", "5m": "5"}
+LIMIT = 300
+USER_AGENT = "bybit-long-monitor/1.0"
 
 
-def fetch_klines(base, market, symbol, interval):
-    path = "/api/v3/klines" if market == "spot" else "/fapi/v1/klines"
-    query = urllib.parse.urlencode({"symbol": symbol, "interval": interval, "limit": LIMIT})
+def fetch_klines(symbol=SYMBOL, interval="60", limit=LIMIT):
+    query = urllib.parse.urlencode({
+        "category": CATEGORY, "symbol": symbol,
+        "interval": interval, "limit": limit,
+    })
     request = urllib.request.Request(
-        f"{base}{path}?{query}",
-        headers={"User-Agent": "binance-market-monitor/1.0"},
+        f"{BASE_URL}/v5/market/kline?{query}",
+        headers={"User-Agent": USER_AGENT},
     )
     with urllib.request.urlopen(request, timeout=20) as response:
-        raw = json.loads(response.read().decode("utf-8"))
+        payload = json.loads(response.read().decode("utf-8"))
+    if payload.get("retCode") != 0:
+        raise RuntimeError(f"Bybit retCode={payload.get('retCode')}: {payload.get('retMsg')}")
     now_ms = int(time.time() * 1000)
-    # Ignore the still-forming candle.
-    return [
-        {"time": int(k[0]), "close_time": int(k[6]), "open": float(k[1]),
-         "high": float(k[2]), "low": float(k[3]), "close": float(k[4]),
-         "volume": float(k[5])}
-        for k in raw if int(k[6]) < now_ms
-    ]
+    candles = []
+    for k in payload.get("result", {}).get("list", []):
+        start, open_, high, low, close, volume, turnover = k
+        start_ms = int(start)
+        duration_ms = int(interval) * 60_000
+        if start_ms + duration_ms <= now_ms:
+            candles.append({
+                "time": start_ms, "close_time": start_ms + duration_ms - 1,
+                "open": float(open_), "high": float(high), "low": float(low),
+                "close": float(close), "volume": float(volume),
+                "turnover": float(turnover),
+            })
+    return sorted(candles, key=lambda x: x["time"])
 
 
 def ema(values, period):
@@ -43,91 +54,175 @@ def ema(values, period):
     return value
 
 
-def rsi(values, period=14):
+def rsi(values, period):
     if len(values) <= period:
         return None
-    gains, losses = [], []
-    for a, b in zip(values[:-1], values[1:]):
-        change = b - a
-        gains.append(max(change, 0.0))
-        losses.append(max(-change, 0.0))
+    changes = [b - a for a, b in zip(values[:-1], values[1:])]
+    gains = [max(x, 0.0) for x in changes]
+    losses = [max(-x, 0.0) for x in changes]
     avg_gain = sum(gains[:period]) / period
     avg_loss = sum(losses[:period]) / period
-    for i in range(period, len(gains)):
+    for i in range(period, len(changes)):
         avg_gain = (avg_gain * (period - 1) + gains[i]) / period
         avg_loss = (avg_loss * (period - 1) + losses[i]) / period
     if avg_loss == 0:
         return 100.0
-    return 100.0 - (100.0 / (1.0 + avg_gain / avg_loss))
+    if avg_gain == 0:
+        return 0.0
+    return 100.0 - 100.0 / (1.0 + avg_gain / avg_loss)
 
 
 def macd(values):
-    fast, slow = ema(values, 12), ema(values, 26)
-    if fast is None or slow is None:
+    """MACD with linear-time EMA passes; suitable for repeated historical analysis."""
+    if len(values) < 35:
         return None
-    # Build the MACD line series to calculate its 9-period signal line.
-    line = []
-    for end in range(26, len(values) + 1):
-        f, s = ema(values[:end], 12), ema(values[:end], 26)
-        if f is not None and s is not None:
-            line.append(f - s)
+
+    def ema_series(items, period):
+        if len(items) < period:
+            return []
+        alpha = 2.0 / (period + 1)
+        current = sum(items[:period]) / period
+        output = [None] * (period - 1) + [current]
+        for item in items[period:]:
+            current = item * alpha + current * (1 - alpha)
+            output.append(current)
+        return output
+
+    fast = ema_series(values, 12)
+    slow = ema_series(values, 26)
+    line = [fast[i] - slow[i] for i in range(25, len(values))]
     signal = ema(line, 9)
-    current = fast - slow
-    return {"line": current, "signal": signal,
-            "histogram": current - signal if signal is not None else None}
+    hist = line[-1] - signal if signal is not None else None
+    previous_signal = ema(line[:-1], 9) if len(line) > 1 else None
+    previous_hist = line[-2] - previous_signal if previous_signal is not None else None
+    return {"dif": line[-1], "dea": signal, "histogram": hist,
+            "histogram_previous": previous_hist,
+            "histogram_rising": hist is not None and previous_hist is not None and hist > previous_hist}
+
+
+def mean(values):
+    return sum(values) / len(values) if values else None
 
 
 def analyze(candles):
     if len(candles) < 60:
-        raise ValueError(f"Not enough closed candles: {len(candles)}")
+        raise ValueError(f"Need at least 60 closed candles; got {len(candles)}")
     closes = [c["close"] for c in candles]
     volumes = [c["volume"] for c in candles]
     e20, e50 = ema(closes, 20), ema(closes, 50)
-    r = rsi(closes)
-    m = macd(closes)
-    avg_volume = sum(volumes[-21:-1]) / min(20, len(volumes[-21:-1]))
-    last_volume = volumes[-1]
-    volume_ratio = last_volume / avg_volume if avg_volume else None
-
-    long_ok = e20 > e50 and closes[-1] > e20 and r is not None and 50 <= r <= 70 and m and m["histogram"] is not None and m["histogram"] > 0
-    short_ok = e20 < e50 and closes[-1] < e20 and r is not None and 30 <= r <= 50 and m and m["histogram"] is not None and m["histogram"] < 0
-    signal = "LONG" if long_ok else "SHORT" if short_ok else "WAIT"
+    macd_data = macd(closes)
+    last = candles[-1]
+    # Compare the latest closed candle against preceding candles only.
+    volume_ma5 = mean(volumes[-6:-1])
+    volume_ma10 = mean(volumes[-11:-1])
+    swing = candles[-50:]
+    swing_high = max(c["high"] for c in swing)
+    swing_low = min(c["low"] for c in swing)
+    span = swing_high - swing_low
+    fib = ({str(level): swing_high - span * level for level in (0.5, 0.618, 0.786)}
+           if span > 0 else {})
     return {
-        "candle_time": datetime.fromtimestamp(candles[-1]["time"] / 1000, timezone.utc).isoformat(),
-        "close": closes[-1], "ema20": e20, "ema50": e50, "rsi14": r,
-        "macd": m, "volume": last_volume, "volume_avg20": avg_volume,
-        "volume_ratio_20": volume_ratio, "signal": signal,
+        "candle_time": datetime.fromtimestamp(last["time"] / 1000, timezone.utc).isoformat(),
+        "close": last["close"], "high": last["high"], "low": last["low"],
+        "ema20": e20, "ema50": e50,
+        "rsi6": rsi(closes, 6), "rsi12": rsi(closes, 12),
+        "rsi14": rsi(closes, 14), "rsi24": rsi(closes, 24),
+        "macd": macd_data, "volume": last["volume"],
+        "volume_ma5": volume_ma5, "volume_ma10": volume_ma10,
+        "volume_vs_ma5": last["volume"] / volume_ma5 if volume_ma5 else None,
+        "volume_vs_ma10": last["volume"] / volume_ma10 if volume_ma10 else None,
+        "breakout_level_20": max(c["high"] for c in candles[-21:-1]),
+        "false_breakout": (last["high"] > max(c["high"] for c in candles[-21:-1]) and last["close"] < max(c["high"] for c in candles[-21:-1])),
+        "swing_high_50": swing_high, "swing_low_50": swing_low,
+        "fibonacci_retracement": fib,
+    }
+
+
+def classify_long(data):
+    """Conservative setup classifier; a signal is not an order recommendation."""
+    h1, m15, m5 = data["1h"], data["15m"], data["5m"]
+    trend = h1["ema20"] > h1["ema50"]
+    momentum = (m15["close"] > m15["ema20"]
+                and m15["macd"]["histogram"] is not None
+                and m15["macd"]["histogram"] > 0
+                and m15["rsi14"] is not None
+                and 50 <= m15["rsi14"] <= 70)
+    volume_ok = (m15["volume_vs_ma5"] is not None and m15["volume_vs_ma5"] >= 0.8
+                 and m15["volume_vs_ma10"] is not None and m15["volume_vs_ma10"] >= 0.8)
+    no_false_breakout = not m15.get("false_breakout", True)
+    early = (m5["macd"]["histogram_rising"]
+             and m5["rsi6"] is not None and m5["rsi6"] > 50
+             and m5["close"] > m5["ema20"])
+    continuation = trend and momentum and volume_ok and early and no_false_breakout
+
+    # Reversal candidate after a sharp 1h decline; requires lower-TF confirmation.
+    h1_drop = ((h1["close"] / h1["swing_high_50"]) - 1) if h1["swing_high_50"] else 0
+    seller_spike = h1["volume_vs_ma10"] if "volume_vs_ma10" in h1 else None
+    seller_spike_ok = seller_spike is not None and seller_spike >= 1.5
+    reversal = (h1_drop <= -0.015
+                and seller_spike_ok
+                and h1["macd"]["histogram_rising"]
+                and m5["macd"]["histogram_rising"]
+                and m5["rsi6"] is not None and m5["rsi6"] >= 35
+                and m15["macd"]["histogram"] is not None
+                and m15["macd"]["histogram"] > 0
+                and m15["close"] > m15["ema20"]
+                and volume_ok and no_false_breakout)
+    if continuation:
+        scenario = "A_TREND_CONTINUATION"
+    elif reversal:
+        scenario = "B_REVERSAL_AFTER_DROP"
+    else:
+        scenario = "WAIT"
+    return {
+        "signal": "LONG_CANDIDATE" if scenario != "WAIT" else "WAIT",
+        "scenario": scenario,
+        "checks": {
+            "1h_ema20_above_ema50": trend,
+            "15m_momentum_confirmed": momentum,
+            "15m_volume_ok": volume_ok,
+            "15m_no_false_breakout": no_false_breakout,
+            "5m_early_confirmation": early,
+            "1h_drop_from_50_candle_high": h1_drop,
+            "1h_seller_volume_spike": seller_spike_ok,
+            "1h_macd_histogram_rising": h1["macd"]["histogram_rising"],
+        },
+        "note": "Candidate only. Verify live Walt balance/positions and calculate SL/TP; no orders are sent.",
     }
 
 
 def main():
     result = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "disclaimer": "Analytics only. No orders are placed or modified.",
-        "markets": {},
-        "errors": [],
+        "source": "Bybit USDT Linear Futures public market data",
+        "category": CATEGORY, "symbol": SYMBOL,
+        "disclaimer": "Analytics only. No orders are placed, cancelled or modified.",
+        "timeframes": {}, "errors": [],
     }
-    for market, base in (("spot", SPOT_BASE),):
-        result["markets"][market] = {}
-        for symbol in SYMBOLS:
-            result["markets"][market][symbol] = {}
-            for interval in INTERVALS:
-                try:
-                    candles = fetch_klines(base, market, symbol, interval)
-                    result["markets"][market][symbol][interval] = analyze(candles)
-                except Exception as exc:
-                    message = f"{market} {symbol} {interval}: {type(exc).__name__}: {exc}"
-                    result["errors"].append(message)
-                    result["markets"][market][symbol][interval] = {"signal": "UNAVAILABLE", "error": str(exc)}
-                time.sleep(0.08)
+    for label, interval in INTERVALS.items():
+        try:
+            result["timeframes"][label] = analyze(fetch_klines(interval=interval))
+        except Exception as exc:
+            result["errors"].append(f"{label}: {type(exc).__name__}: {exc}")
+    if len(result["timeframes"]) == 3:
+        result["decision"] = classify_long(result["timeframes"])
+    else:
+        result["decision"] = {
+            "signal": "WAIT", "scenario": "DATA_UNAVAILABLE",
+            "note": "One or more required timeframes unavailable; fail closed.",
+        }
     os.makedirs("data", exist_ok=True)
     with open("data/latest.json", "w", encoding="utf-8") as output:
         json.dump(result, output, ensure_ascii=False, indent=2, allow_nan=False)
         output.write("\n")
-    print(json.dumps({"generated_at": result["generated_at"], "errors": len(result["errors"])}, indent=2))
-    # A partial API outage should still preserve diagnostics and the latest successful data.
-    if len(result["errors"]) == len(SYMBOLS) * len(INTERVALS) * 2:
-        raise SystemExit("All Binance market requests failed; inspect data/latest.json")
+    print(json.dumps({
+        "generated_at": result["generated_at"],
+        "signal": result["decision"]["signal"],
+        "scenario": result["decision"]["scenario"],
+        "errors": result["errors"],
+    }, ensure_ascii=False, indent=2))
+    if result["errors"]:
+        raise SystemExit("Incomplete Bybit data; decision forced to WAIT. See data/latest.json")
 
 
 if __name__ == "__main__":
