@@ -2,6 +2,14 @@ name: Bybit Multi-Asset LONG Monitor
 
 on:
   workflow_dispatch:
+  push:
+    branches: [bybit-long-v1]
+    paths:
+      - "bybit_monitor.py"
+      - "monitor.py"
+      - "backtest.py"
+      - "tests/**"
+      - ".github/workflows/bybit-monitor.yml"
   schedule:
     - cron: "*/15 * * * *"
 
@@ -60,8 +68,7 @@ jobs:
                       raise SystemExit(f"Missing {symbol} {tf} close")
           print(f"Validated snapshot age={age:.0f}s")
           PY
-      - name: Send Telegram market report
-        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+      - name: Send Telegram market report (when configured)
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
@@ -74,6 +81,9 @@ jobs:
           from datetime import datetime
           from pathlib import Path
 
+          if not os.environ.get("TELEGRAM_BOT_TOKEN") or not os.environ.get("TELEGRAM_CHAT_ID"):
+              print("Telegram credentials are not configured; skipping notification.")
+              raise SystemExit(0)
           data = json.loads(Path("data/bybit_latest.json").read_text(encoding="utf-8"))
           generated = datetime.fromisoformat(data["generated_at"]).strftime("%d.%m.%Y %H:%M UTC")
           labels = {"LONG": "LONG — условия стратегии совпали", "WAIT": "WAIT — вход не подтверждён", "UNAVAILABLE": "UNAVAILABLE — нет надёжных данных"}
