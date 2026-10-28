@@ -47,6 +47,19 @@ class IndicatorTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             monitor.analyze(candles_from_closes([100.0] * 59))
 
+    def test_analyze_detects_false_breakout(self):
+        rows = candles_from_closes([100.0] * 69 + [99.0])
+        rows[-1]["high"] = 103.0
+        result = monitor.analyze(rows)
+        self.assertTrue(result["false_breakout"])
+        self.assertEqual(result["breakout_level_20"], 101.0)
+
+    def test_volume_confirmation_fails_when_latest_volume_is_weak(self):
+        rows = candles_from_closes([100.0] * 70, [100.0] * 69 + [50.0])
+        result = monitor.analyze(rows)
+        self.assertLess(result["volume_vs_ma5"], 0.8)
+        self.assertLess(result["volume_vs_ma10"], 0.8)
+
     def test_classifier_returns_wait_for_mixed_conditions(self):
         rows = candles_from_closes([100.0] * 80)
         data = {tf: monitor.analyze(rows) for tf in ("1h", "15m", "5m")}
