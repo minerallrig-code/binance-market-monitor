@@ -162,6 +162,28 @@ def btc_filter_passes(symbol, btc_item):
     return not (ema20 < ema50 and close < ema50)
 
 
+def classify_symbol(symbol, item, btc_item=None):
+    """Pure signal classifier shared by live monitoring and historical tests."""
+    h, m, f = item.get("1h", {}), item.get("15m", {}), item.get("5m", {})
+    if any(not isinstance(x, dict) or "error" in x for x in (h, m, f)):
+        return "UNAVAILABLE"
+    required = (h.get("ema20"), h.get("ema50"), h.get("close"),
+                m.get("ema20"), m.get("rsi14"), m.get("macd"),
+                f.get("ema20"), f.get("rsi6"), f.get("macd"))
+    if any(x is None for x in required):
+        return "UNAVAILABLE"
+    trend_ok = h["ema20"] > h["ema50"] and h["close"] > h["ema20"]
+    macd15 = m["macd"].get("histogram")
+    volume_ok = m.get("volume_ratio_20") is not None and m["volume_ratio_20"] >= 0.8
+    entry_ok = (m["close"] > m["ema20"] and 50 <= m["rsi14"] <= 70
+                and macd15 is not None and macd15 > 0 and volume_ok
+                and not m.get("false_breakout", True))
+    five_min_ok = (f["close"] > f["ema20"] and f["rsi6"] > 50
+                   and bool(f["macd"].get("histogram_rising")))
+    btc_ok = btc_filter_passes(symbol, btc_item or {})
+    return "LONG" if trend_ok and entry_ok and five_min_ok and btc_ok else "WAIT"
+
+
 def main():
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -185,23 +207,8 @@ def main():
                 item[label] = {"signal": "UNAVAILABLE", "error": str(exc)}
                 output["errors"].append(f"{symbol} {label}: {type(exc).__name__}: {exc}")
             time.sleep(0.15)
-        h, m, f = item.get("1h", {}), item.get("15m", {}), item.get("5m", {})
-        if "error" in h or "error" in m or "error" in f:
-            signal = "UNAVAILABLE"
-        else:
-            trend_ok = h["ema20"] > h["ema50"] and h["close"] > h["ema20"]
-            volume_ok = m["volume_ratio_20"] is not None and m["volume_ratio_20"] >= 0.8
-            no_false_breakout = not m.get("false_breakout", True)
-            entry_ok = (m["close"] > m["ema20"] and 50 <= m["rsi14"] <= 70
-                        and m["macd"]["histogram"] is not None
-                        and m["macd"]["histogram"] > 0 and volume_ok
-                        and no_false_breakout)
-            five_min_ok = (f["close"] > f["ema20"] and f["rsi6"] is not None
-                           and f["rsi6"] > 50 and f["macd"]["histogram_rising"])
-            btc = output["symbols"].get("BTCUSDT", {})
-            btc_h1 = btc.get("1h", {})
-            btc_ok = btc_filter_passes(symbol, btc)
-            signal = "LONG" if trend_ok and entry_ok and five_min_ok and btc_ok else "WAIT"
+        btc = output["symbols"].get("BTCUSDT", {})
+        signal = classify_symbol(symbol, item, btc)
         item["signal"] = signal
         item["reason"] = (
             "1h trend, 15m momentum/volume, no false breakout, 5m confirmation and BTC filter passed"
