@@ -1,4 +1,4 @@
-name: Bybit BTCUSDT LONG Monitor
+name: Bybit Multi-Asset LONG Monitor
 
 on:
   workflow_dispatch:
@@ -9,34 +9,59 @@ permissions:
   contents: write
 
 concurrency:
-  group: bybit-btc-long-monitor
+  group: bybit-multi-asset-long-monitor
   cancel-in-progress: true
 
 jobs:
   monitor:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Check out strategy branch
         uses: actions/checkout@v4
         with:
           ref: bybit-long-v1
+          fetch-depth: 0
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Run read-only Bybit monitor
-        run: python monitor.py
       - name: Run unit tests
         run: python -m unittest discover -s tests -v
+      - name: Run read-only Bybit/OKX market monitor
+        run: python bybit_monitor.py
+      - name: Validate snapshot freshness and schema
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("data/bybit_latest.json")
+          data = json.loads(path.read_text(encoding="utf-8"))
+          generated = datetime.fromisoformat(data["generated_at"])
+          age = (datetime.now(timezone.utc) - generated).total_seconds()
+          if age < -60 or age > 600:
+              raise SystemExit(f"Snapshot is stale or timestamp invalid: age={age:.0f}s")
+          if set(data.get("symbols", {})) != {"BTCUSDT", "ETHUSDT", "SOLUSDT"}:
+              raise SystemExit("Snapshot must contain BTCUSDT, ETHUSDT and SOLUSDT")
+          for symbol, item in data["symbols"].items():
+              if item.get("signal") not in {"LONG", "WAIT", "UNAVAILABLE"}:
+                  raise SystemExit(f"Invalid signal for {symbol}")
+              for tf in ("1h", "15m", "5m"):
+                  candle = item.get(tf, {})
+                  if "error" not in candle and candle.get("close") is None:
+                      raise SystemExit(f"Missing {symbol} {tf} close")
+          print(f"Validated snapshot age={age:.0f}s")
+          PY
       - name: Commit latest snapshot
         run: |
-          if git diff --quiet -- data/latest.json; then
+          if git diff --quiet -- data/bybit_latest.json; then
             echo "No snapshot changes."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/latest.json
-          git commit -m "Update Bybit BTCUSDT market snapshot"
+          git add data/bybit_latest.json
+          git commit -m "Update multi-asset Bybit market snapshot"
           git push origin HEAD:bybit-long-v1
