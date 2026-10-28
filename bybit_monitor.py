@@ -146,6 +146,22 @@ def analyze(candles):
     }
 
 
+
+def btc_filter_passes(symbol, btc_item):
+    """Require a valid, non-bearish BTC 1h trend before altcoin LONG signals."""
+    if symbol == "BTCUSDT":
+        return True
+    if not isinstance(btc_item, dict):
+        return False
+    h1 = btc_item.get("1h", {})
+    if not isinstance(h1, dict) or "error" in h1:
+        return False
+    ema20, ema50, close = h1.get("ema20"), h1.get("ema50"), h1.get("close")
+    if ema20 is None or ema50 is None or close is None:
+        return False
+    return not (ema20 < ema50 and close < ema50)
+
+
 def main():
     output = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
@@ -184,12 +200,8 @@ def main():
                            and f["rsi6"] > 50 and f["macd"]["histogram_rising"])
             btc = output["symbols"].get("BTCUSDT", {})
             btc_h1 = btc.get("1h", {})
-            btc_bearish = (symbol != "BTCUSDT" and "error" not in btc_h1
-                           and btc_h1.get("ema20") is not None
-                           and btc_h1.get("ema50") is not None
-                           and btc_h1["ema20"] < btc_h1["ema50"]
-                           and btc_h1["close"] < btc_h1["ema50"])
-            signal = "LONG" if trend_ok and entry_ok and five_min_ok and not btc_bearish else "WAIT"
+            btc_ok = btc_filter_passes(symbol, btc)
+            signal = "LONG" if trend_ok and entry_ok and five_min_ok and btc_ok else "WAIT"
         item["signal"] = signal
         item["reason"] = (
             "1h trend, 15m momentum/volume, no false breakout, 5m confirmation and BTC filter passed"
