@@ -7,7 +7,7 @@ Read-only analytics for **BTCUSDT USDT Linear Futures on Bybit**. The monitor us
 - Instrument: `BTCUSDT`
 - Timeframes: 1H, 15m, 5m
 - Closed candles only; the active candle is discarded
-- No silent OKX/Binance fallback. If any timeframe is unavailable, the decision is `WAIT`.
+- The live monitor and historical backtest use public Bybit market data with an OKX public-data fallback where configured. The source exchange is recorded; unavailable or insufficient timeframe data must not be treated as a valid LONG signal.
 
 ## Indicators
 - EMA20 / EMA50
@@ -32,10 +32,10 @@ python -m unittest discover -s tests -v
 python backtest.py --days 30
 ```
 
-Outputs: `data/latest.json` and `data/backtest_latest.json`. The backtest fetches historical Bybit candles and evaluates the same LONG classifier. Set `BYBIT_API_BASE_URL` if your permitted Bybit account region uses a dedicated official API host. GitHub-hosted runners can receive HTTP 403 because Bybit restricts API access from US and Mainland China IP addresses; run the historical test from an allowed region (for example, the user's Singapore-region Render service), not through a proxy or region bypass; it enters at the next 5m open, uses an ATR(14) stop (1.5x), a 2R target, and includes configured taker fees, adverse slippage, and hourly funding. It uses a conservative stop-first rule if stop and target are both touched in one candle. Funding is a fixed stress assumption, not actual historical funding.
+Outputs: `data/latest.json` and `data/backtest_latest.json`. The backtest fetches historical Bybit candles (with OKX fallback) and evaluates the same LONG classifier. Set `BYBIT_API_BASE_URL` if your permitted Bybit account region uses a dedicated official API host. GitHub-hosted runners can receive HTTP 403 because Bybit restricts API access from US and Mainland China IP addresses; run the historical test from an allowed region (for example, the user's Singapore-region Render service), not through a proxy or region bypass; it enters at the next 5m open, uses an ATR(14) stop (1.5x), a 2R target, and includes configured taker fees, adverse slippage, and hourly funding. It uses a conservative stop-first rule if stop and target are both touched in one candle. Funding is a fixed stress assumption, not actual historical funding.
 
 ## GitHub Actions
-The workflow is configured for a manual run and a 15-minute schedule on the `bybit-long-v1` branch. It runs the monitor and unit tests, then commits the refreshed snapshot to that branch. Scheduled runs require this workflow to be merged into the repository's default branch or otherwise enabled there; this feature branch alone does not guarantee scheduled execution.
+The workflow is configured for manual runs and pushes to `bybit-long-v1`; it runs the monitor and unit tests, then commits the refreshed snapshot to that branch. It also uploads the snapshot and 30-/90-day backtest JSON reports as a downloadable workflow artifact (30-day retention). GitHub scheduled workflows run only when the workflow file is present on the repository's default branch; this feature branch alone does not activate the 15-minute schedule.
 
 ## Safety
 - LONG-only; no SHORT logic
