@@ -44,6 +44,17 @@ jobs:
         run: python backtest.py --days 30 --output data/backtest_30d.json
       - name: Run 90-day historical backtest
         run: python backtest.py --days 90 --output data/backtest_90d.json
+      - name: Upload monitor and backtest reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bybit-long-reports-${{ github.run_number }}
+          path: |
+            data/bybit_latest.json
+            data/backtest_30d.json
+            data/backtest_90d.json
+          if-no-files-found: warn
+          retention-days: 30
       - name: Validate snapshot freshness and schema
         run: |
           python - <<'PY'
