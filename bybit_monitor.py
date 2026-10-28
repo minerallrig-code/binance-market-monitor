@@ -140,7 +140,9 @@ def analyze(candles):
         "candle_time": datetime.fromtimestamp(candles[-1]["time"] / 1000, timezone.utc).isoformat(),
         "close": closes[-1], "ema20": e20, "ema50": e50, "rsi6": rsi(closes, 6), "rsi12": rsi(closes, 12), "rsi14": r, "rsi24": rsi(closes, 24),
         "macd": m, "volume": volumes[-1], "volume_avg20": avg_volume, "volume_ma5": sum(volumes[-6:-1]) / 5, "volume_ma10": sum(volumes[-11:-1]) / 10,
-        "volume_ratio_20": volumes[-1] / avg_volume if avg_volume else None, "volume_ratio_ma5": volumes[-1] / (sum(volumes[-6:-1]) / 5) if sum(volumes[-6:-1]) else None, "volume_ratio_ma10": volumes[-1] / (sum(volumes[-11:-1]) / 10) if sum(volumes[-11:-1]) else None,
+        "volume_ratio_20": volumes[-1] / avg_volume if avg_volume else None,
+        "breakout_level_20": max(c["high"] for c in candles[-21:-1]),
+        "false_breakout": (candles[-1]["high"] > max(c["high"] for c in candles[-21:-1]) and closes[-1] < max(c["high"] for c in candles[-21:-1])), "volume_ratio_ma5": volumes[-1] / (sum(volumes[-6:-1]) / 5) if sum(volumes[-6:-1]) else None, "volume_ratio_ma10": volumes[-1] / (sum(volumes[-11:-1]) / 10) if sum(volumes[-11:-1]) else None,
     }
 
 
@@ -149,7 +151,7 @@ def main():
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "primary_exchange": "Bybit", "fallback_exchange": "OKX",
         "market": "USDT perpetual swaps",
-        "strategy": "LONG only; 1h trend + 15m confirmation + 5m early-turn context; RSI6/12/14/24 and volume MA5/MA10; closed candles only",
+        "strategy": "LONG only; 1h trend + 15m momentum/volume + false-breakout filter + 5m confirmation; ETH/SOL blocked when BTC 1h is bearish; closed candles only",
         "disclaimer": "Analytics only. No orders are placed, cancelled, or modified. OKX fallback volume is not directly comparable to Bybit volume.",
         "symbols": {}, "errors": ERRORS,
     }
@@ -167,20 +169,32 @@ def main():
                 item[label] = {"signal": "UNAVAILABLE", "error": str(exc)}
                 output["errors"].append(f"{symbol} {label}: {type(exc).__name__}: {exc}")
             time.sleep(0.15)
-        h, m = item.get("1h", {}), item.get("15m", {})
-        if "error" in h or "error" in m:
+        h, m, f = item.get("1h", {}), item.get("15m", {}), item.get("5m", {})
+        if "error" in h or "error" in m or "error" in f:
             signal = "UNAVAILABLE"
         else:
             trend_ok = h["ema20"] > h["ema50"] and h["close"] > h["ema20"]
+            volume_ok = m["volume_ratio_20"] is not None and m["volume_ratio_20"] >= 0.8
+            no_false_breakout = not m.get("false_breakout", True)
             entry_ok = (m["close"] > m["ema20"] and 50 <= m["rsi14"] <= 70
                         and m["macd"]["histogram"] is not None
-                        and m["macd"]["histogram"] > 0)
-            signal = "LONG" if trend_ok and entry_ok else "WAIT"
+                        and m["macd"]["histogram"] > 0 and volume_ok
+                        and no_false_breakout)
+            five_min_ok = (f["close"] > f["ema20"] and f["rsi6"] is not None
+                           and f["rsi6"] > 50 and f["macd"]["histogram_rising"])
+            btc = output["symbols"].get("BTCUSDT", {})
+            btc_h1 = btc.get("1h", {})
+            btc_bearish = (symbol != "BTCUSDT" and "error" not in btc_h1
+                           and btc_h1.get("ema20") is not None
+                           and btc_h1.get("ema50") is not None
+                           and btc_h1["ema20"] < btc_h1["ema50"]
+                           and btc_h1["close"] < btc_h1["ema50"])
+            signal = "LONG" if trend_ok and entry_ok and five_min_ok and not btc_bearish else "WAIT"
         item["signal"] = signal
         item["reason"] = (
-            "1h bullish trend and 15m momentum confirmed"
+            "1h trend, 15m momentum/volume, no false breakout, 5m confirmation and BTC filter passed"
             if signal == "LONG" else
-            "No complete long confirmation on closed 1h/15m candles"
+            "One or more trend, volume, false-breakout, 5m or BTC filters did not pass"
             if signal == "WAIT" else "Market data unavailable; no signal"
         )
         item["volume_caution"] = "Compare volume with your Bybit chart only when data_source is Bybit."
