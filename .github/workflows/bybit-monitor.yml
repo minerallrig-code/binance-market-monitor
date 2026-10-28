@@ -54,6 +54,55 @@ jobs:
                       raise SystemExit(f"Missing {symbol} {tf} close")
           print(f"Validated snapshot age={age:.0f}s")
           PY
+      - name: Send Telegram market report
+        if: ${{ secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != '' }}
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import urllib.parse
+          import urllib.request
+          from datetime import datetime
+          from pathlib import Path
+
+          data = json.loads(Path("data/bybit_latest.json").read_text(encoding="utf-8"))
+          generated = datetime.fromisoformat(data["generated_at"]).strftime("%d.%m.%Y %H:%M UTC")
+          labels = {"LONG": "LONG — условия стратегии совпали", "WAIT": "WAIT — вход не подтверждён", "UNAVAILABLE": "UNAVAILABLE — нет надёжных данных"}
+          lines = ["BYBIT LONG MONITOR", generated, ""]
+          for symbol in ("BTCUSDT", "ETHUSDT", "SOLUSDT"):
+              item = data["symbols"][symbol]
+              h, m, f = item.get("1h", {}), item.get("15m", {}), item.get("5m", {})
+              lines.append(f"{symbol}: {labels[item['signal']]}")
+              if "error" not in m:
+                  lines.append(f"Цена 15M: {m.get('close', '—')}")
+                  lines.append(f"RSI14 15M: {m.get('rsi14', '—'):.1f}")
+                  lines.append(f"EMA20/50 1H: {h.get('ema20', 0):.4f} / {h.get('ema50', 0):.4f}" if "error" not in h else "Тренд 1H: нет данных")
+                  lines.append(f"MACD histogram 15M: {m.get('macd', {}).get('histogram', '—')}")
+                  lines.append(f"Источник 15M: {m.get('data_source', '—')}")
+              else:
+                  lines.append("15M: данные недоступны")
+              lines.append(item.get("reason", ""))
+              lines.append("")
+          lines.append("Важно: это аналитический сигнал, не команда на сделку. Бот не открывает ордера. Перед входом нужны проверка графика, расчёт SL/TP и подтверждение.")
+          if data.get("errors"):
+              lines.extend(["", f"Предупреждений по данным: {len(data['errors'])}."])
+          message = "\n".join(lines)
+          payload = urllib.parse.urlencode({"chat_id": os.environ["TELEGRAM_CHAT_ID"], "text": message}).encode()
+          request = urllib.request.Request(
+              f"https://api.telegram.org/bot{os.environ['TELEGRAM_BOT_TOKEN']}/sendMessage",
+              data=payload,
+              headers={"Content-Type": "application/x-www-form-urlencoded"},
+              method="POST",
+          )
+          with urllib.request.urlopen(request, timeout=20) as response:
+              result = json.loads(response.read().decode("utf-8"))
+          if not result.get("ok"):
+              raise SystemExit(f"Telegram API error: {result}")
+          print("Telegram report sent.")
+          PY
       - name: Commit latest snapshot
         run: |
           if git diff --quiet -- data/bybit_latest.json; then
