@@ -131,6 +131,8 @@ def analyze(candles):
         "volume_ma5": volume_ma5, "volume_ma10": volume_ma10,
         "volume_vs_ma5": last["volume"] / volume_ma5 if volume_ma5 else None,
         "volume_vs_ma10": last["volume"] / volume_ma10 if volume_ma10 else None,
+        "breakout_level_20": max(c["high"] for c in candles[-21:-1]),
+        "false_breakout": (last["high"] > max(c["high"] for c in candles[-21:-1]) and last["close"] < max(c["high"] for c in candles[-21:-1])),
         "swing_high_50": swing_high, "swing_low_50": swing_low,
         "fibonacci_retracement": fib,
     }
@@ -145,11 +147,13 @@ def classify_long(data):
                 and m15["macd"]["histogram"] > 0
                 and m15["rsi14"] is not None
                 and 50 <= m15["rsi14"] <= 70)
-    volume_ok = m15["volume_vs_ma5"] is not None and m15["volume_vs_ma5"] >= 0.8
+    volume_ok = (m15["volume_vs_ma5"] is not None and m15["volume_vs_ma5"] >= 0.8
+                 and m15["volume_vs_ma10"] is not None and m15["volume_vs_ma10"] >= 0.8)
+    no_false_breakout = not m15.get("false_breakout", True)
     early = (m5["macd"]["histogram_rising"]
              and m5["rsi6"] is not None and m5["rsi6"] > 50
              and m5["close"] > m5["ema20"])
-    continuation = trend and momentum and volume_ok and early
+    continuation = trend and momentum and volume_ok and early and no_false_breakout
 
     # Reversal candidate after a sharp 1h decline; requires lower-TF confirmation.
     h1_drop = ((h1["close"] / h1["swing_high_50"]) - 1) if h1["swing_high_50"] else 0
@@ -163,7 +167,7 @@ def classify_long(data):
                 and m15["macd"]["histogram"] is not None
                 and m15["macd"]["histogram"] > 0
                 and m15["close"] > m15["ema20"]
-                and volume_ok)
+                and volume_ok and no_false_breakout)
     if continuation:
         scenario = "A_TREND_CONTINUATION"
     elif reversal:
@@ -177,6 +181,7 @@ def classify_long(data):
             "1h_ema20_above_ema50": trend,
             "15m_momentum_confirmed": momentum,
             "15m_volume_ok": volume_ok,
+            "15m_no_false_breakout": no_false_breakout,
             "5m_early_confirmation": early,
             "1h_drop_from_50_candle_high": h1_drop,
             "1h_seller_volume_spike": seller_spike_ok,
