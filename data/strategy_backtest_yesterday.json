@@ -4,22 +4,8 @@
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 14,
+      "signals": 12,
       "results": [
-        {
-          "time_utc": "2026-10-28T19:15:00+00:00",
-          "entry": 81170.2,
-          "max_up_pct_1h": 0.7365,
-          "max_down_pct_1h": -0.1677,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T19:30:00+00:00",
-          "entry": 81294.0,
-          "max_up_pct_1h": 0.5831,
-          "max_down_pct_1h": -0.3197,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T20:00:00+00:00",
           "entry": 81248.8,
@@ -101,22 +87,15 @@
           "time_utc": "2026-10-29T16:45:00+00:00",
           "entry": 81240.1,
           "max_up_pct_1h": 0.0,
-          "max_down_pct_1h": -0.3875,
+          "max_down_pct_1h": -0.7261,
           "5m_early_turn": false
         }
       ]
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 10,
+      "signals": 9,
       "results": [
-        {
-          "time_utc": "2026-10-28T19:15:00+00:00",
-          "entry": 2357.74,
-          "max_up_pct_1h": 1.4175,
-          "max_down_pct_1h": -0.3707,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T20:00:00+00:00",
           "entry": 2366.08,
@@ -184,22 +163,8 @@
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 13,
+      "signals": 11,
       "results": [
-        {
-          "time_utc": "2026-10-28T19:15:00+00:00",
-          "entry": 102.18,
-          "max_up_pct_1h": 1.6148,
-          "max_down_pct_1h": -0.3425,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T19:30:00+00:00",
-          "entry": 102.5,
-          "max_up_pct_1h": 1.2976,
-          "max_down_pct_1h": -0.6537,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T20:00:00+00:00",
           "entry": 102.63,
