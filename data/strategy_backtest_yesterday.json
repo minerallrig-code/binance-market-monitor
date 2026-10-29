@@ -4,22 +4,8 @@
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 12,
+      "signals": 10,
       "results": [
-        {
-          "time_utc": "2026-10-28T04:00:00+00:00",
-          "entry": 80960.1,
-          "max_up_pct_1h": 0.145,
-          "max_down_pct_1h": -0.1025,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T04:15:00+00:00",
-          "entry": 80942.7,
-          "max_up_pct_1h": 0.1665,
-          "max_down_pct_1h": -0.081,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T08:00:00+00:00",
           "entry": 81136.9,
@@ -94,15 +80,8 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 11,
+      "signals": 10,
       "results": [
-        {
-          "time_utc": "2026-10-28T04:00:00+00:00",
-          "entry": 2354.5,
-          "max_up_pct_1h": 0.1487,
-          "max_down_pct_1h": -0.1448,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T07:45:00+00:00",
           "entry": 2360.21,
@@ -177,29 +156,8 @@
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 16,
+      "signals": 13,
       "results": [
-        {
-          "time_utc": "2026-10-28T04:00:00+00:00",
-          "entry": 101.78,
-          "max_up_pct_1h": 0.4127,
-          "max_down_pct_1h": -0.1179,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T04:15:00+00:00",
-          "entry": 101.74,
-          "max_up_pct_1h": 0.4521,
-          "max_down_pct_1h": -0.0098,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T04:30:00+00:00",
-          "entry": 102.1,
-          "max_up_pct_1h": 0.0979,
-          "max_down_pct_1h": -0.2938,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T04:45:00+00:00",
           "entry": 101.96,
