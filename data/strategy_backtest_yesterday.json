@@ -4,36 +4,8 @@
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 7,
+      "signals": 3,
       "results": [
-        {
-          "time_utc": "2026-10-28T09:15:00+00:00",
-          "entry": 81446.2,
-          "max_up_pct_1h": 0.1207,
-          "max_down_pct_1h": -0.1543,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T09:30:00+00:00",
-          "entry": 81491.6,
-          "max_up_pct_1h": 0.0692,
-          "max_down_pct_1h": -0.0956,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T09:45:00+00:00",
-          "entry": 81519.2,
-          "max_up_pct_1h": 0.0611,
-          "max_down_pct_1h": -0.1294,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T10:00:00+00:00",
-          "entry": 81484.4,
-          "max_up_pct_1h": 0.1038,
-          "max_down_pct_1h": -0.1918,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T10:15:00+00:00",
           "entry": 81498.6,
@@ -59,36 +31,8 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 6,
+      "signals": 2,
       "results": [
-        {
-          "time_utc": "2026-10-28T09:15:00+00:00",
-          "entry": 2368.2,
-          "max_up_pct_1h": 0.2626,
-          "max_down_pct_1h": -0.1347,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T09:30:00+00:00",
-          "entry": 2371.75,
-          "max_up_pct_1h": 0.1126,
-          "max_down_pct_1h": -0.1948,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T09:45:00+00:00",
-          "entry": 2372.59,
-          "max_up_pct_1h": 0.0771,
-          "max_down_pct_1h": -0.2301,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T10:00:00+00:00",
-          "entry": 2369.77,
-          "max_up_pct_1h": 0.0941,
-          "max_down_pct_1h": -0.4097,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T10:15:00+00:00",
           "entry": 2369.58,
@@ -107,36 +51,8 @@
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 7,
+      "signals": 3,
       "results": [
-        {
-          "time_utc": "2026-10-28T09:15:00+00:00",
-          "entry": 102.65,
-          "max_up_pct_1h": 0.5261,
-          "max_down_pct_1h": -0.2241,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T09:30:00+00:00",
-          "entry": 102.77,
-          "max_up_pct_1h": 0.4087,
-          "max_down_pct_1h": -0.0389,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T09:45:00+00:00",
-          "entry": 102.93,
-          "max_up_pct_1h": 0.2526,
-          "max_down_pct_1h": -0.068,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T10:00:00+00:00",
-          "entry": 102.94,
-          "max_up_pct_1h": 0.2429,
-          "max_down_pct_1h": -0.3886,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T10:15:00+00:00",
           "entry": 103.15,
