@@ -4,36 +4,8 @@
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 5,
+      "signals": 1,
       "results": [
-        {
-          "time_utc": "2026-10-28T21:45:00+00:00",
-          "entry": 81328.0,
-          "max_up_pct_1h": 0.098,
-          "max_down_pct_1h": -0.278,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:00:00+00:00",
-          "entry": 81252.4,
-          "max_up_pct_1h": 0.1911,
-          "max_down_pct_1h": -0.1852,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:15:00+00:00",
-          "entry": 81234.3,
-          "max_up_pct_1h": 0.2135,
-          "max_down_pct_1h": -0.1395,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:30:00+00:00",
-          "entry": 81285.9,
-          "max_up_pct_1h": 0.0581,
-          "max_down_pct_1h": -0.2029,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-29T16:45:00+00:00",
           "entry": 81240.1,
@@ -45,57 +17,13 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 2,
-      "results": [
-        {
-          "time_utc": "2026-10-28T21:45:00+00:00",
-          "entry": 2363.69,
-          "max_up_pct_1h": 0.129,
-          "max_down_pct_1h": -0.4002,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:00:00+00:00",
-          "entry": 2358.98,
-          "max_up_pct_1h": 0.329,
-          "max_down_pct_1h": -0.2264,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 4,
-      "results": [
-        {
-          "time_utc": "2026-10-28T21:45:00+00:00",
-          "entry": 102.7,
-          "max_up_pct_1h": 0.0584,
-          "max_down_pct_1h": -0.4869,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:00:00+00:00",
-          "entry": 102.45,
-          "max_up_pct_1h": 0.3026,
-          "max_down_pct_1h": -0.244,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:15:00+00:00",
-          "entry": 102.44,
-          "max_up_pct_1h": 0.3124,
-          "max_down_pct_1h": -0.2148,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-10-28T22:30:00+00:00",
-          "entry": 102.56,
-          "max_up_pct_1h": 0.0975,
-          "max_down_pct_1h": -0.3315,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     }
   }
 }
