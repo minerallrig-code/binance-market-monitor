@@ -80,15 +80,8 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 10,
+      "signals": 9,
       "results": [
-        {
-          "time_utc": "2026-10-28T07:45:00+00:00",
-          "entry": 2360.21,
-          "max_up_pct_1h": 1.1469,
-          "max_down_pct_1h": -0.0038,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-10-28T08:00:00+00:00",
           "entry": 2363.64,
