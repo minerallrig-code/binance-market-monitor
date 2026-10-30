@@ -4,16 +4,8 @@
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 1,
-      "results": [
-        {
-          "time_utc": "2026-10-29T16:45:00+00:00",
-          "entry": 81240.1,
-          "max_up_pct_1h": 0.0,
-          "max_down_pct_1h": -0.7261,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
