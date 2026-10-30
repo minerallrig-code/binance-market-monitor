@@ -1,5 +1,5 @@
 {
-  "date_vietnam": "2026-10-29",
+  "date_vietnam": "2026-10-30",
   "method": "LONG-only historical signal audit: 1h EMA20/50 trend + 15m close above EMA20, RSI14 50-70 and positive MACD histogram; 5m RSI6/MACD rising is context only. Entry at next 15m open; measure next 1h high/low excursion. No fees, slippage, funding, stop/target or position sizing. Not a profitability backtest.",
   "symbols": {
     "BTCUSDT": {
