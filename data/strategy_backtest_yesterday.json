@@ -1,5 +1,5 @@
 {
-  "date_vietnam": "2026-10-31",
+  "date_vietnam": "2026-11-01",
   "method": "LONG-only historical signal audit: 1h EMA20/50 trend + 15m close above EMA20, RSI14 50-70 and positive MACD histogram; 5m RSI6/MACD rising is context only. Entry at next 15m open; measure next 1h high/low excursion. No fees, slippage, funding, stop/target or position sizing. Not a profitability backtest.",
   "symbols": {
     "BTCUSDT": {
@@ -9,8 +9,93 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 0,
-      "results": []
+      "signals": 12,
+      "results": [
+        {
+          "time_utc": "2026-11-01T08:45:00+00:00",
+          "entry": 2275.16,
+          "max_up_pct_1h": 0.0356,
+          "max_down_pct_1h": -0.3947,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T09:00:00+00:00",
+          "entry": 2272.37,
+          "max_up_pct_1h": 0.0246,
+          "max_down_pct_1h": -0.2724,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T14:00:00+00:00",
+          "entry": 2268.88,
+          "max_up_pct_1h": 0.156,
+          "max_down_pct_1h": -0.0908,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T14:15:00+00:00",
+          "entry": 2267.91,
+          "max_up_pct_1h": 0.1737,
+          "max_down_pct_1h": -0.0132,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T14:30:00+00:00",
+          "entry": 2269.96,
+          "max_up_pct_1h": 0.0833,
+          "max_down_pct_1h": -0.0943,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T14:45:00+00:00",
+          "entry": 2270.46,
+          "max_up_pct_1h": 0.0555,
+          "max_down_pct_1h": -0.2185,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T15:00:00+00:00",
+          "entry": 2270.83,
+          "max_up_pct_1h": 0.0114,
+          "max_down_pct_1h": -0.2466,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T15:15:00+00:00",
+          "entry": 2269.54,
+          "max_up_pct_1h": 0.041,
+          "max_down_pct_1h": -0.1899,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T15:30:00+00:00",
+          "entry": 2268.17,
+          "max_up_pct_1h": 0.1014,
+          "max_down_pct_1h": -0.1296,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T16:00:00+00:00",
+          "entry": 2268.66,
+          "max_up_pct_1h": 0.0798,
+          "max_down_pct_1h": -0.1159,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T16:15:00+00:00",
+          "entry": 2269.28,
+          "max_up_pct_1h": 0.0,
+          "max_down_pct_1h": -0.1432,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-01T16:45:00+00:00",
+          "entry": 2268.52,
+          "max_up_pct_1h": 0.0529,
+          "max_down_pct_1h": -0.0939,
+          "5m_early_turn": false
+        }
+      ]
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
