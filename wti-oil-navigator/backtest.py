@@ -27,6 +27,8 @@ class Trade:
     exit_reason: str
     gross_return_pct: float
     net_return_pct: float
+    funding_cost_pct: float
+    funding_payments_count: int
     r_multiple: float
     bars_held: int
 
@@ -187,6 +189,26 @@ def _signal_at(
     return None
 
 
+def _funding_cost_fraction(
+    side: str, entry_time_ms: int, exit_time_ms: int, records: list[dict[str, Any]]
+) -> tuple[float, int]:
+    total = 0.0
+    count = 0
+    for record in records:
+        timestamp = int(record["timestamp"]) * 1000  # Lighter funding timestamps are seconds.
+        if not (entry_time_ms <= timestamp <= exit_time_ms):
+            continue
+        direction = str(record.get("direction", "")).lower()
+        if direction not in ("long", "short"):
+            raise ValueError(f"Unknown Lighter funding direction: {direction!r}")
+        rate_percent_per_hour = float(record["rate"])
+        signed_rate_fraction = (rate_percent_per_hour / 100.0) * (1.0 if direction == "long" else -1.0)
+        # Lighter direction=long means longs pay shorts; invert for short positions.
+        total += signed_rate_fraction if side == "LONG" else -signed_rate_fraction
+        count += 1
+    return total, count
+
+
 def run_backtest(
     candles_15m: list[dict[str, Any]],
     candles_1h: list[dict[str, Any]],
@@ -198,6 +220,7 @@ def run_backtest(
     slippage_bps_per_side: float = 2.0,
     max_holding_bars: int = 48,
     entry_mode: str = "pullback_recovery",
+    funding_records: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Return trade list and metrics. Entry occurs at next bar open (no lookahead)."""
     if min(len(candles_15m), len(candles_1h), len(candles_4h)) < 70:
@@ -205,6 +228,7 @@ def run_backtest(
     if stop_atr <= 0 or reward_risk <= 0 or fee_rate_per_side < 0 or slippage_bps_per_side < 0:
         raise ValueError("Invalid backtest parameters")
 
+    funding_records = funding_records or []
     base = sorted(candles_15m, key=lambda row: int(row["t"]))
     h1 = sorted(candles_1h, key=lambda row: int(row["t"]))
     h4 = sorted(candles_4h, key=lambda row: int(row["t"]))
@@ -262,7 +286,11 @@ def run_backtest(
 
         exit_slipped = float(exit_price) * (1 - slip if side == "LONG" else 1 + slip)
         gross = ((exit_slipped - entry) / entry) if side == "LONG" else ((entry - exit_slipped) / entry)
-        net = gross - total_cost
+        exit_time_ms = int(base[exit_i]["t"]) + _resolution_ms(base)
+        funding_cost, funding_count = _funding_cost_fraction(
+            side, int(entry_bar["t"]), exit_time_ms, funding_records
+        )
+        net = gross - total_cost - funding_cost
         r_multiple = net / (risk_distance / entry)
         trades.append(Trade(
             side=side,
@@ -276,6 +304,8 @@ def run_backtest(
             exit_reason=str(reason),
             gross_return_pct=round(gross * 100, 4),
             net_return_pct=round(net * 100, 4),
+            funding_cost_pct=round(funding_cost * 100, 6),
+            funding_payments_count=funding_count,
             r_multiple=round(r_multiple, 4),
             bars_held=exit_i - entry_i + 1,
         ))
@@ -298,7 +328,7 @@ def run_backtest(
                 "entry": "next 15m candle open after signal candle closes",
                 "same_bar_stop_target": "stop first (conservative)",
                 "equity_curve_assumption": "100% of unlevered notional per sequential trade; not a position-sizing forecast",
-                "funding_cost": "not included; funding sign, interval and position hold timing require separate validation",
+                "funding_cost": "historical Lighter hourly rate and direction applied to each position holding interval",
             },
         }
 
@@ -327,6 +357,8 @@ def run_backtest(
         "stop_exits": sum(trade.exit_reason == "STOP" for trade in trades),
         "target_exits": sum(trade.exit_reason == "TARGET" for trade in trades),
         "time_exits": sum(trade.exit_reason == "TIME_EXIT" for trade in trades),
+        "funding_cost_pct_total": round(sum(trade.funding_cost_pct for trade in trades), 6),
+        "funding_payments_count": sum(trade.funding_payments_count for trade in trades),
     }
     return {
         "trade_count": len(trades),
@@ -343,6 +375,6 @@ def run_backtest(
             "entry": "next 15m candle open after signal candle closes",
             "same_bar_stop_target": "stop first (conservative)",
             "equity_curve_assumption": "100% of unlevered notional per sequential trade; not a position-sizing forecast",
-            "funding_cost": "not included yet; requires verified funding timestamp/sign convention and position hold intervals",
+            "funding_cost": "historical Lighter hourly rate and direction applied to each position holding interval; entry price is used as a constant notional approximation",
         },
     }
