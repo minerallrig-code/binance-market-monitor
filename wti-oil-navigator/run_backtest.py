@@ -13,6 +13,8 @@ from pathlib import Path
 
 from market_data import LighterAPIError, LighterPublicAPI
 from backtest import run_backtest
+from news_ingest import collect_news
+from event_study import analyze_news_response
 
 SECONDS = {"15m": 900, "1h": 3600, "4h": 14400}
 DEFAULT_BARS = {"15m": 3000, "1h": 1000, "4h": 500}
@@ -93,6 +95,8 @@ def main() -> int:
         _run_model(candles["15m"], candles["1h"], candles["4h"], mode, fee, slippage)
         for mode in ENTRY_MODES
     ]
+    news = collect_news()
+    event_study = analyze_news_response(news, candles["15m"])
     output_data = {
         "status": "RESEARCH_ONLY",
         "instrument": {
@@ -114,6 +118,9 @@ def main() -> int:
         },
         "split": "chronological 70% in-sample / 30% holdout",
         "models": results,
+        "news_status": news["status"],
+        "news_headlines_collected": news["unique_headlines"],
+        "news_event_study": event_study,
         "fetched_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
         "warning": "Historical replay is not proof of future profitability. Funding is not included yet. Holdout is not to be used for parameter tuning.",
     }
@@ -125,6 +132,9 @@ def main() -> int:
         "symbol": spec.symbol,
         "market_id": spec.market_id,
         "data_window": output_data["data_window"],
+        "news_status": output_data["news_status"],
+        "news_headlines_collected": output_data["news_headlines_collected"],
+        "news_events_matched": event_study["events_matched"],
         "models": [
             {
                 "entry_mode": model["entry_mode"],
