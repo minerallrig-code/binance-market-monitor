@@ -1,0 +1,48 @@
+name: WTI Oil Navigator — market data check
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "13 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wti-market-data-check
+  cancel-in-progress: true
+
+jobs:
+  market-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout WTI branch
+        uses: actions/checkout@v4
+        with:
+          ref: wti-oil-navigator
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run adapter unit tests
+        working-directory: wti-oil-navigator
+        run: python -m unittest -v
+
+      - name: Fetch and validate public WTI market data
+        working-directory: wti-oil-navigator
+        env:
+          LIGHTER_API_BASE: https://mainnet.zklighter.elliot.ai/api/v1
+          LIGHTER_SYMBOL: WTI
+          WTI_OUTPUT_PATH: latest_snapshot.json
+        run: python run_market_check.py
+
+      - name: Upload validated market snapshot
+        if: always() && hashFiles('wti-oil-navigator/latest_snapshot.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: wti-market-snapshot
+          path: wti-oil-navigator/latest_snapshot.json
+          retention-days: 7
