@@ -50,13 +50,15 @@ A negative perpetual funding rate commonly means shorts pay longs, but do not in
 - Do not reuse crypto-bot leverage, margin, or indicator thresholds for WTI without testing.
 
 ## Current implementation status
-Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Added a GET-only Python adapter, unit tests, and a multi-timeframe runner for 1D/4H/1H/15M/5M candles. A GitHub Actions workflow is configured for hourly checks and manual runs; scheduled GitHub workflows only execute after the workflow is present on the repository's default branch. The live API call could not be executed from this environment (DNS/network access unavailable), so the actual `market_id`, minimums, precision, multiplier and fee values remain unverified. No trading signals or orders are generated.
+Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Live GitHub Actions validation passed on 2026-11-02. Lighter returned the active WTI perpetual with `market_id=145`, minimum base amount `0.060`, minimum quote amount `10 USDC`, size/price precision 3/3, multiplier 1.0, and current API-reported maker/taker fees `0.0000` (verify again at each run). The run validated 119 closed candles per timeframe, 48 funding records, 50 recent trades, and top-of-book spread. Technical context and 267 deduplicated news headlines were collected; the sample produced `MIXED` higher-timeframe bias and `WAIT`, not a trade signal. Hourly GitHub Actions scheduling activates only after this branch is merged to the repository's default branch. No order execution exists.
 
 ## Planned modules
-- `market_data.py`: public API client, dynamic WTI discovery, market details and OHLC candles
-- `test_market_data.py`: tests for market selection and fail-closed behavior
-- `run_market_check.py`: validates live market data and closed candles across 1D/4H/1H/15M/5M; outputs a JSON snapshot
-- `.github/workflows/wti-market-check.yml`: hourly and manual read-only data check (activate by merging this branch to the default branch)
+- `market_data.py`: public API client, dynamic WTI discovery, market details, OHLC candles, funding, order-book spread and recent trades
+- `indicators.py`: RSI(6/14/24), EMA(20/50), MACD, ATR and volume context; currently emits WAIT only
+- `news_ingest.py`: four Google News RSS searches, publisher attribution, deduplication and topic tags; no automatic sentiment inference
+- `run_market_check.py`: validates market data across 1D/4H/1H/15M/5M and writes a JSON snapshot
+- `test_*.py`: unit tests for market discovery, indicators and news tagging
+- `.github/workflows/wti-market-check.yml`: pull-request, manual and hourly read-only checks (hourly schedule activates after merge to the default branch)
 - news/: RSS/API ingestion, deduplication, event classification
 - analysis/: technical indicators and event/price alignment
 - signals/: confluence rules, risk model, stale-data guards
