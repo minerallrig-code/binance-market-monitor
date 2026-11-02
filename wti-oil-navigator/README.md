@@ -53,13 +53,18 @@ A negative perpetual funding rate commonly means shorts pay longs, but do not in
 
 The read-only pipeline has passed live GitHub Actions validation on 2026-11-02:
 - Active Lighter WTI perpetual discovered dynamically as `WTI-USDC`, `market_id=145`.
-- Live contract metadata returned minimum base amount `0.060`, minimum quote amount `10 USDC`, size/price precision 3/3 and multiplier 1.0. API fee fields currently returned `0.0000`; these values must be checked every run and are not treated as a guarantee of zero execution cost.
+- Live contract metadata returned minimum base amount `0.060`, minimum quote amount `10 USDC`, size/price precision 3/3 and multiplier 1.0. API fee fields currently returned `0.0000`; these values are checked live and are not treated as a guarantee of zero execution cost.
 - Market snapshots collect 1D/4H/1H/15M/5M candles, funding history, top-of-book spread, recent trades and technical indicators.
-- Historical research fetches 3,000 15m, 1,000 1h and 500 4h candles (roughly 31, 42 and 83 days respectively), then compares three fixed entry models using a chronological 70% in-sample / 30% holdout split.
-- The latest completed replay showed very small sample counts: pullback recovery 1 in-sample / 0 holdout trades; EMA20 momentum cross 6 / 1; MACD zero cross 27 / 2. EMA20's holdout trade lost 0.53%; MACD zero-cross holdout had two trades and +0.21%. These are far too few observations to establish an edge. No strategy is approved for live signals.
-- Replay assumptions: 1.5 ATR stop, 2R target, next 15m open entry, stop-first if stop and target touch in the same candle, 0.05% assumed fee per side and 2 bps assumed slippage per side. Funding is not yet included. Equity return compounds sequentially at 100% unlevered notional and is not a position-sizing forecast.
-- News ingestion collected 206 recent headlines in the latest run. Event study clustered overlapping topic windows and compared post-headline returns with non-overlapping same-period price windows. Results remain descriptive only; news timing, anticipation, broad market trend and overlapping macro events prevent causal or predictive conclusions.
-- Latest validated run: https://github.com/minerallrig-code/binance-market-monitor/actions/runs/41423901510
+- Historical research fetches 6,000 15m, 1,500 1h and 400 4h candles (roughly 62, 62 and 67 days respectively), then compares three fixed entry models using a chronological 70% in-sample / 30% holdout split.
+- Historical funding is now included: latest run collected 1,492 hourly Lighter funding records from 2026-08-31 to 2026-11-02. The adapter normalizes `rate` as percent per hour and uses `direction` to determine payer: `long` means longs pay shorts; `short` means shorts pay longs. Funding is applied only at payment timestamps falling inside a simulated position's holding interval.
+- Latest cost-adjusted replay results remain inconclusive:
+  - Pullback recovery: 6 in-sample trades, +0.89%; 1 holdout trade, +0.68%. Holdout sample is far too small.
+  - EMA20 momentum cross: 7 in-sample trades, -0.92%; 4 holdout trades, -0.26%.
+  - MACD zero cross: 35 in-sample trades, -3.96%; 19 holdout trades, -0.42%.
+  No strategy has demonstrated a reliable positive edge. No live signal is enabled.
+- Replay assumptions: 1.5 ATR stop, 2R target, next 15m open entry, stop-first if stop and target touch in the same candle, 0.05% assumed fee per side and 2 bps assumed slippage per side. Funding uses actual historical hourly records. Equity return compounds sequentially at 100% unlevered notional and is not a position-sizing forecast.
+- News ingestion collected 339 headlines in the latest run, with 300 matched to the candle sample. Event study clusters overlapping topic windows and compares post-headline returns with non-overlapping same-period price windows. Results remain descriptive only; news timing, anticipation, market regime and overlapping macro events prevent causal or predictive conclusions.
+- Latest validated run: https://github.com/minerallrig-code/binance-market-monitor/actions/runs/41424431324
 - Hourly schedule activates only after the draft PR is merged into the repository's default branch. No wallet credentials, signing, order placement or live trading are included.
 
 ## Implemented modules
