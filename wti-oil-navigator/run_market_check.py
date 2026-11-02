@@ -8,6 +8,7 @@ import time
 from pathlib import Path
 
 from market_data import LighterAPIError, LighterPublicAPI
+from indicators import analyze_all_timeframes
 
 TIMEFRAMES = {
     "1d": 86400,
@@ -56,6 +57,7 @@ def main() -> int:
     funding = api.funding_history(spec.market_id, now - 48 * 3600, now)
     book = api.order_book_top(spec.market_id, limit=20)
     trades = api.recent_trades(spec.market_id, limit=50)
+    technical = analyze_all_timeframes(market_data)
 
     result = {
         "status": "DATA_OK_NO_SIGNAL",
@@ -64,6 +66,7 @@ def main() -> int:
         "symbol": symbol,
         "market": spec.__dict__,
         "timeframes": market_data,
+        "technical_analysis": technical,
         "funding_history_48h": funding,
         "order_book_top": book,
         "recent_trades_count": len(trades),
@@ -84,6 +87,8 @@ def main() -> int:
         "spread_bps": book["spread_bps"],
         "funding_records_48h": len(funding),
         "recent_trades": len(trades),
+        "technical_bias": technical["higher_timeframe_bias"],
+        "signal": technical["signal"],
         "snapshot": str(output),
     }, indent=2))
     return 0
