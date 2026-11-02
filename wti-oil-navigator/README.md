@@ -50,11 +50,13 @@ A negative perpetual funding rate commonly means shorts pay longs, but do not in
 - Do not reuse crypto-bot leverage, margin, or indicator thresholds for WTI without testing.
 
 ## Current implementation status
-Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Added a GET-only Python adapter that discovers the active WTI perpetual dynamically and fetches market details/candles; it refuses ambiguous market matches. Unit tests cover market selection and fail-closed behavior. The live API call has not yet been executed in this environment, so the actual `market_id`, minimums, precision, multiplier and fee values remain unverified. No live signal automation or trading is active.
+Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Added a GET-only Python adapter, unit tests, and a multi-timeframe runner for 1D/4H/1H/15M/5M candles. A GitHub Actions workflow is configured for hourly checks and manual runs; scheduled GitHub workflows only execute after the workflow is present on the repository's default branch. The live API call could not be executed from this environment (DNS/network access unavailable), so the actual `market_id`, minimums, precision, multiplier and fee values remain unverified. No trading signals or orders are generated.
 
 ## Planned modules
-- market_data.py: public API client, dynamic WTI discovery, market details and OHLC candles
-- test_market_data.py: unit tests for market selection and fail-closed behavior
+- `market_data.py`: public API client, dynamic WTI discovery, market details and OHLC candles
+- `test_market_data.py`: tests for market selection and fail-closed behavior
+- `run_market_check.py`: validates live market data and closed candles across 1D/4H/1H/15M/5M; outputs a JSON snapshot
+- `.github/workflows/wti-market-check.yml`: hourly and manual read-only data check (activate by merging this branch to the default branch)
 - news/: RSS/API ingestion, deduplication, event classification
 - analysis/: technical indicators and event/price alignment
 - signals/: confluence rules, risk model, stale-data guards
