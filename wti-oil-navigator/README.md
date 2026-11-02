@@ -2,14 +2,22 @@
 
 A separate, read-only signal engine for the WTI perpetual contract shown in Walt.
 
-## Walt instrument facts observed from the user's screenshots
-- Display name: WTI Crude Oil (WTI) versus USD.
-- Instrument is described in Walt as a perpetual futures contract.
-- Walt advertises leverage up to 20x; this is a platform maximum, not the bot's recommended leverage.
-- One screenshot showed funding at -0.008%; the funding interval and exact payment timestamp remain unverified.
-- A later screenshot showed 24h volume of $6.43m and open interest of $8.02m. These are time-sensitive snapshots, not constants.
-- Walt UI exposes 5m, 15m, 1h, and 4h chart intervals in the supplied screenshot.
-- LONG and SHORT actions are available in the UI.
+## Verified instrument mapping
+- Walt's official help centre says perpetual-futures chart data is supplied by Lighter; the chart shows executed trades, while the headline price is the mark price.
+- Lighter market identity independently listed by DeFiLlama: `WTI-USDC` (Lighter market slug `lighter:wti`), commodity perpetual, base asset Crude Oil (WTI), quote/margin/settlement asset USDC.
+- Oracle provider listed by DeFiLlama: Pyth Lazer.
+- Maximum leverage listed: 20x. This is an exchange maximum, not the bot's recommended leverage.
+- Size decimals listed: 3. Exact minimum base/quote size, price decimals, market_id, contract multiplier and fee schedule must be read from Lighter's live market metadata before use.
+- Walt screenshots showed 24h volume/open interest snapshots and a funding display of -0.008%. Those values are time-sensitive and must not be hardcoded. DeFiLlama snapshots have shown different funding values at other times, confirming funding must be fetched live.
+- Walt says funding may be charged or credited hourly. The exact displayed sign convention and payment schedule must be checked against Lighter market funding data before interpreting a value.
+
+## Data source and endpoints
+- Public Lighter market-data API base: `https://mainnet.zklighter.elliot.ai/api/v1`
+- Discover the WTI perpetual by querying `orderBooks` and matching `symbol=WTI`, `market_type=perp`, and active status; do not hardcode a market_id.
+- Read live precision, fees, minimums, mark/index/last price and open interest from `orderBookDetails` for the discovered market_id.
+- Read executed-trade OHLCV from `candles`; separately read mark-price candles from `markPriceCandles`.
+- Read historical funding from `fundings` and current market statistics from `orderBookDetails` / WebSocket market stats.
+- Confirm all endpoint schemas and timestamp units against the current official Lighter API docs before production use.
 
 ## Operating mode
 - Signal-only: never places, edits, or closes orders.
@@ -18,9 +26,9 @@ A separate, read-only signal engine for the WTI perpetual contract shown in Walt
 - No wallet/API keys, deposits, withdrawals, or access to the user's funds.
 
 ## Decision pipeline
-1. Verify the exact Walt instrument identifier, contract multiplier, quote currency, tick size, minimum order size, funding interval, and settlement rules.
-2. Identify a market-data feed that tracks the Walt contract closely; do not assume a generic WTI benchmark is identical.
-3. Collect WTI market data and normalize timestamps.
+1. Discover WTI market_id and validate that the market is active.
+2. Verify contract multiplier, quote currency, tick size, minimum order size, fees, funding interval, and settlement rules from live metadata.
+3. Collect Lighter trade candles, mark-price data, funding, order-book/liquidity data and normalize timestamps.
 4. Collect timestamped news from multiple independent sources.
 5. Classify each event by topic (Iran/US, Strait of Hormuz, OPEC+, Saudi Arabia, US inventories, sanctions, shipping, USD/macro).
 6. Score source reliability, event novelty, direction, and expected impact. Deduplicate syndicated copies.
@@ -30,7 +38,7 @@ A separate, read-only signal engine for the WTI perpetual contract shown in Walt
 10. Log every signal and subsequent outcome for walk-forward evaluation.
 
 ## Funding interpretation
-A negative perpetual funding rate commonly means shorts pay longs, but the exact convention, interval, and payment schedule must be confirmed from Walt's contract details. Funding is positioning/carry context, not a standalone directional signal.
+A negative perpetual funding rate commonly means shorts pay longs, but do not infer payer direction from the sign alone. Confirm Lighter's `direction` / funding fields and Walt's displayed convention. Funding is positioning/carry context, not a standalone directional signal.
 
 ## Safety and validation
 - No automatic execution.
@@ -38,14 +46,14 @@ A negative perpetual funding rate commonly means shorts pay longs, but the exact
 - News is context, not an automatic trading trigger. A headline alone cannot open a position.
 - Stop-loss distance and position sizing must be calculated from the actual contract specification and user-approved risk limits.
 - Backtest with realistic spread, slippage, fees, funding, and contract trading hours before live use.
-- Do not use Walt's maximum 20x leverage as a default. Establish risk-based sizing after contract multiplier and stop distance are known.
+- Do not use Walt/Lighter's maximum 20x leverage as a default. Establish risk-based sizing after contract multiplier and stop distance are known.
 - Do not reuse crypto-bot leverage, margin, or indicator thresholds for WTI without testing.
 
 ## Current implementation status
-Project scaffold and Walt instrument facts have been recorded. The exact contract identifier, multiplier, tick/minimum size, funding interval, and a reliable matching market-data feed are still unverified. News provider/source selection and Telegram delivery are also pending. No live trading or signal automation is active.
+Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Live `market_id`, minimum order size, tick/price decimals, multiplier and current fee/funding details still need to be resolved from the API at runtime. Scaffold only; no live signal automation or trading is active.
 
 ## Planned modules
-- market_data/: contract adapter and candle validation
+- market_data/: dynamic market discovery, contract adapter and candle validation
 - news/: RSS/API ingestion, deduplication, event classification
 - analysis/: technical indicators and event/price alignment
 - signals/: confluence rules, risk model, stale-data guards
