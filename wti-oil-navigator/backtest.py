@@ -37,12 +37,16 @@ def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
     ema50 = _ema(close, 50)
     ema12 = _ema(close, 12)
     ema26 = _ema(close, 26)
-    macd_line = [a - b for a, b in zip(ema12, ema26)]
-    macd_signal = _ema(macd_line, 9)
-    hist = [
-        (macd_line[i] - macd_signal[i]) if isfinite(macd_line[i]) and isfinite(macd_signal[i]) else None
-        for i in range(len(close))
-    ]
+    # Start MACD only after both EMAs are valid; feeding leading NaNs into EMA
+    # would poison the signal line for the entire series.
+    macd_start = 25
+    macd_line_valid = [ema12[i] - ema26[i] for i in range(macd_start, len(close))]
+    macd_signal_valid = _ema(macd_line_valid, 9)
+    hist = [None] * len(close)
+    for offset, value in enumerate(macd_line_valid):
+        signal_value = macd_signal_valid[offset]
+        if isfinite(value) and isfinite(signal_value):
+            hist[macd_start + offset] = value - signal_value
     rsi6 = [_rsi(close[:i + 1], 6) for i in range(len(close))]
     rsi14 = [_rsi(close[:i + 1], 14) for i in range(len(close))]
     atr = [_atr(rows[:i + 1], 14) for i in range(len(rows))]
@@ -145,7 +149,8 @@ def run_backtest(
     trades: list[Trade] = []
     i = 60
     last_exit_i = -1
-    total_cost = 2 * fee_rate_per_side + 2 * slippage_bps_per_side / 10000
+    # Slippage is already applied to entry and exit prices; subtract fees only here.
+    total_cost = 2 * fee_rate_per_side
 
     while i < len(base) - 1:
         if i <= last_exit_i:
