@@ -1,0 +1,275 @@
+"""Conservative, no-lookahead WTI strategy replay on closed candles.
+
+The simulator is deliberately signal research only. It does not size or place orders.
+Costs are configurable assumptions because venue fees, spread and slippage vary.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, asdict
+from math import isfinite
+from statistics import mean
+from typing import Any
+
+from indicators import _atr, _ema, _rsi
+
+
+@dataclass
+class Trade:
+    side: str
+    signal_time_ms: int
+    entry_time_ms: int
+    exit_time_ms: int
+    entry: float
+    stop: float
+    target: float
+    exit: float
+    exit_reason: str
+    gross_return_pct: float
+    net_return_pct: float
+    r_multiple: float
+    bars_held: int
+
+
+def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
+    rows = sorted(candles, key=lambda row: int(row["t"]))
+    close = [float(row["c"]) for row in rows]
+    ema20 = _ema(close, 20)
+    ema50 = _ema(close, 50)
+    ema12 = _ema(close, 12)
+    ema26 = _ema(close, 26)
+    macd_line = [a - b for a, b in zip(ema12, ema26)]
+    macd_signal = _ema(macd_line, 9)
+    hist = [
+        (macd_line[i] - macd_signal[i]) if isfinite(macd_line[i]) and isfinite(macd_signal[i]) else None
+        for i in range(len(close))
+    ]
+    rsi6 = [_rsi(close[:i + 1], 6) for i in range(len(close))]
+    rsi14 = [_rsi(close[:i + 1], 14) for i in range(len(close))]
+    atr = [_atr(rows[:i + 1], 14) for i in range(len(rows))]
+    return {
+        "close": close,
+        "ema20": [v if isfinite(v) else None for v in ema20],
+        "ema50": [v if isfinite(v) else None for v in ema50],
+        "hist": hist,
+        "rsi6": rsi6,
+        "rsi14": rsi14,
+        "atr": atr,
+    }
+
+
+def _trend_at(candles: list[dict[str, Any]], series: dict[str, list[float | None]], time_ms: int) -> str | None:
+    # Only use a higher-timeframe candle whose close timestamp is <= decision time.
+    eligible = [
+        i for i, candle in enumerate(candles)
+        if int(candle["t"]) + _resolution_ms(candles) <= time_ms
+    ]
+    if not eligible:
+        return None
+    i = eligible[-1]
+    close = series["close"][i]
+    ema20, ema50 = series["ema20"][i], series["ema50"][i]
+    if ema20 is None or ema50 is None:
+        return None
+    if close > ema20 > ema50:
+        return "LONG"
+    if close < ema20 < ema50:
+        return "SHORT"
+    return "NEUTRAL"
+
+
+def _resolution_ms(candles: list[dict[str, Any]]) -> int:
+    if len(candles) < 2:
+        raise ValueError("At least two candles required to infer timeframe")
+    diffs = [int(candles[i]["t"]) - int(candles[i - 1]["t"]) for i in range(1, min(len(candles), 30))]
+    return int(sorted(diffs)[len(diffs) // 2])
+
+
+def _signal_at(
+    i: int,
+    base: list[dict[str, Any]],
+    base_s: dict[str, list[float | None]],
+    h1: list[dict[str, Any]],
+    h1_s: dict[str, list[float | None]],
+    h4: list[dict[str, Any]],
+    h4_s: dict[str, list[float | None]],
+) -> str | None:
+    candle = base[i]
+    decision_time = int(candle["t"]) + _resolution_ms(base)
+    trend1 = _trend_at(h1, h1_s, decision_time)
+    trend4 = _trend_at(h4, h4_s, decision_time)
+    if trend1 != trend4 or trend1 not in ("LONG", "SHORT"):
+        return None
+
+    rsi6, rsi14 = base_s["rsi6"][i], base_s["rsi14"][i]
+    hist = base_s["hist"][i]
+    prev_hist = base_s["hist"][i - 1] if i > 0 else None
+    atr = base_s["atr"][i]
+    ema20 = base_s["ema20"][i]
+    if None in (rsi6, rsi14, hist, prev_hist, atr, ema20) or atr <= 0:
+        return None
+
+    if trend1 == "LONG":
+        # Pullback recovery: RSI6 exits oversold, RSI14 regains momentum,
+        # and MACD histogram turns upward while 1h and 4h remain aligned.
+        if base_s["rsi6"][i - 1] is not None and base_s["rsi6"][i - 1] <= 30 and rsi6 > 30:
+            if rsi14 >= 45 and hist > prev_hist and float(candle["c"]) > ema20:
+                return "LONG"
+    else:
+        if base_s["rsi6"][i - 1] is not None and base_s["rsi6"][i - 1] >= 70 and rsi6 < 70:
+            if rsi14 <= 55 and hist < prev_hist and float(candle["c"]) < ema20:
+                return "SHORT"
+    return None
+
+
+def run_backtest(
+    candles_15m: list[dict[str, Any]],
+    candles_1h: list[dict[str, Any]],
+    candles_4h: list[dict[str, Any]],
+    *,
+    stop_atr: float = 1.5,
+    reward_risk: float = 2.0,
+    fee_rate_per_side: float = 0.0005,
+    slippage_bps_per_side: float = 2.0,
+    max_holding_bars: int = 48,
+) -> dict[str, Any]:
+    """Return trade list and metrics. Entry occurs at next bar open (no lookahead)."""
+    if min(len(candles_15m), len(candles_1h), len(candles_4h)) < 70:
+        raise ValueError("Need at least 70 candles on 15m, 1h and 4h")
+    if stop_atr <= 0 or reward_risk <= 0 or fee_rate_per_side < 0 or slippage_bps_per_side < 0:
+        raise ValueError("Invalid backtest parameters")
+
+    base = sorted(candles_15m, key=lambda row: int(row["t"]))
+    h1 = sorted(candles_1h, key=lambda row: int(row["t"]))
+    h4 = sorted(candles_4h, key=lambda row: int(row["t"]))
+    base_s, h1_s, h4_s = _series(base), _series(h1), _series(h4)
+    trades: list[Trade] = []
+    i = 60
+    last_exit_i = -1
+    total_cost = 2 * fee_rate_per_side + 2 * slippage_bps_per_side / 10000
+
+    while i < len(base) - 1:
+        if i <= last_exit_i:
+            i += 1
+            continue
+        side = _signal_at(i, base, base_s, h1, h1_s, h4, h4_s)
+        atr = base_s["atr"][i]
+        if side is None or atr is None:
+            i += 1
+            continue
+
+        entry_i = i + 1
+        entry_bar = base[entry_i]
+        raw_entry = float(entry_bar["o"])
+        slip = slippage_bps_per_side / 10000
+        entry = raw_entry * (1 + slip if side == "LONG" else 1 - slip)
+        risk_distance = float(atr) * stop_atr
+        stop = entry - risk_distance if side == "LONG" else entry + risk_distance
+        target = entry + risk_distance * reward_risk if side == "LONG" else entry - risk_distance * reward_risk
+
+        exit_i = None
+        exit_price = None
+        reason = None
+        final_i = min(len(base) - 1, entry_i + max_holding_bars)
+        for j in range(entry_i, final_i + 1):
+            high, low = float(base[j]["h"]), float(base[j]["l"])
+            # If both levels are touched within one candle, pessimistically assume stop first.
+            if side == "LONG":
+                if low <= stop:
+                    exit_i, exit_price, reason = j, stop, "STOP"
+                    break
+                if high >= target:
+                    exit_i, exit_price, reason = j, target, "TARGET"
+                    break
+            else:
+                if high >= stop:
+                    exit_i, exit_price, reason = j, stop, "STOP"
+                    break
+                if low <= target:
+                    exit_i, exit_price, reason = j, target, "TARGET"
+                    break
+        if exit_i is None:
+            exit_i = final_i
+            exit_price = float(base[final_i]["c"])
+            reason = "TIME_EXIT"
+
+        exit_slipped = float(exit_price) * (1 - slip if side == "LONG" else 1 + slip)
+        gross = ((exit_slipped - entry) / entry) if side == "LONG" else ((entry - exit_slipped) / entry)
+        net = gross - total_cost
+        r_multiple = net / (risk_distance / entry)
+        trades.append(Trade(
+            side=side,
+            signal_time_ms=int(base[i]["t"]) + _resolution_ms(base),
+            entry_time_ms=int(entry_bar["t"]),
+            exit_time_ms=int(base[exit_i]["t"]) + _resolution_ms(base),
+            entry=round(entry, 5),
+            stop=round(stop, 5),
+            target=round(target, 5),
+            exit=round(exit_slipped, 5),
+            exit_reason=str(reason),
+            gross_return_pct=round(gross * 100, 4),
+            net_return_pct=round(net * 100, 4),
+            r_multiple=round(r_multiple, 4),
+            bars_held=exit_i - entry_i + 1,
+        ))
+        last_exit_i = exit_i
+        i = exit_i + 1
+
+    if not trades:
+        return {
+            "trade_count": 0,
+            "metrics": None,
+            "trades": [],
+            "status": "NO_TRADES",
+            "assumptions": {
+                "stop_atr": stop_atr,
+                "reward_risk": reward_risk,
+                "fee_rate_per_side": fee_rate_per_side,
+                "slippage_bps_per_side": slippage_bps_per_side,
+                "max_holding_bars": max_holding_bars,
+                "entry": "next 15m candle open after signal candle closes",
+                "same_bar_stop_target": "stop first (conservative)",
+            },
+        }
+
+    returns = [trade.net_return_pct / 100 for trade in trades]
+    wins = [value for value in returns if value > 0]
+    losses = [value for value in returns if value <= 0]
+    gross_profit = sum(value for value in returns if value > 0)
+    gross_loss = abs(sum(value for value in returns if value < 0))
+    equity = 1.0
+    peak = 1.0
+    max_drawdown = 0.0
+    for value in returns:
+        equity *= (1 + value)
+        peak = max(peak, equity)
+        max_drawdown = max(max_drawdown, (peak - equity) / peak)
+
+    metrics = {
+        "win_rate_pct": round(len(wins) / len(trades) * 100, 2),
+        "net_profit_pct_compounded": round((equity - 1) * 100, 2),
+        "average_trade_pct": round(mean(returns) * 100, 4),
+        "profit_factor": round(gross_profit / gross_loss, 3) if gross_loss else None,
+        "max_drawdown_pct": round(max_drawdown * 100, 2),
+        "average_r_multiple": round(mean(trade.r_multiple for trade in trades), 3),
+        "long_trades": sum(trade.side == "LONG" for trade in trades),
+        "short_trades": sum(trade.side == "SHORT" for trade in trades),
+        "stop_exits": sum(trade.exit_reason == "STOP" for trade in trades),
+        "target_exits": sum(trade.exit_reason == "TARGET" for trade in trades),
+        "time_exits": sum(trade.exit_reason == "TIME_EXIT" for trade in trades),
+    }
+    return {
+        "trade_count": len(trades),
+        "metrics": metrics,
+        "trades": [asdict(trade) for trade in trades],
+        "status": "RESEARCH_ONLY",
+        "assumptions": {
+            "stop_atr": stop_atr,
+            "reward_risk": reward_risk,
+            "fee_rate_per_side": fee_rate_per_side,
+            "slippage_bps_per_side": slippage_bps_per_side,
+            "max_holding_bars": max_holding_bars,
+            "entry": "next 15m candle open after signal candle closes",
+            "same_bar_stop_target": "stop first (conservative)",
+            "funding_cost": "not included yet; requires verified funding timestamp/sign convention and position hold intervals",
+        },
+    }
