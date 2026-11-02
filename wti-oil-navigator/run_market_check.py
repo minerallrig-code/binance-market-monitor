@@ -53,6 +53,10 @@ def main() -> int:
             "candles": closed,
         }
 
+    funding = api.funding_history(spec.market_id, now - 48 * 3600, now)
+    book = api.order_book_top(spec.market_id, limit=20)
+    trades = api.recent_trades(spec.market_id, limit=50)
+
     result = {
         "status": "DATA_OK_NO_SIGNAL",
         "fetched_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
@@ -60,6 +64,10 @@ def main() -> int:
         "symbol": symbol,
         "market": spec.__dict__,
         "timeframes": market_data,
+        "funding_history_48h": funding,
+        "order_book_top": book,
+        "recent_trades_count": len(trades),
+        "recent_trades_sample": trades[:10],
         "execution_enabled": False,
         "note": "Market data validated. No trading signal has been generated and no orders can be placed.",
     }
@@ -73,6 +81,9 @@ def main() -> int:
         "mark_price": spec.mark_price,
         "last_trade_price": spec.last_trade_price,
         "candles": {tf: item["count_closed"] for tf, item in market_data.items()},
+        "spread_bps": book["spread_bps"],
+        "funding_records_48h": len(funding),
+        "recent_trades": len(trades),
         "snapshot": str(output),
     }, indent=2))
     return 0
