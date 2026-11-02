@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: wti-market-data-check
+  group: wti-oil-navigator-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
