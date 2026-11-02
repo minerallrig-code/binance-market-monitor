@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 import time
+from decimal import Decimal
 from dataclasses import asdict, dataclass
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -170,6 +171,44 @@ class LighterPublicAPI:
         })
         rows = self._rows(payload, "fundings", "funding")
         # Funding timestamps have been observed in seconds, unlike candle timestamps.
+        return rows
+
+    def order_book_top(self, market_id: int, limit: int = 20) -> dict[str, Any]:
+        payload = self.get("orderBookOrders", {
+            "market_id": market_id,
+            "limit": min(max(int(limit), 1), 250),
+        })
+        bids = payload.get("bids")
+        asks = payload.get("asks")
+        if not isinstance(bids, list) or not isinstance(asks, list):
+            raise LighterAPIError("Unexpected orderBookOrders response: missing bids/asks")
+        bid_prices = [Decimal(str(row["price"])) for row in bids if isinstance(row, dict) and row.get("price") is not None]
+        ask_prices = [Decimal(str(row["price"])) for row in asks if isinstance(row, dict) and row.get("price") is not None]
+        if not bid_prices or not ask_prices:
+            raise LighterAPIError("Order book is empty on one side; refusing to calculate spread")
+        best_bid = max(bid_prices)
+        best_ask = min(ask_prices)
+        if best_ask <= best_bid:
+            raise LighterAPIError("Invalid/crossed order book")
+        midpoint = (best_bid + best_ask) / Decimal("2")
+        spread_bps = ((best_ask - best_bid) / midpoint) * Decimal("10000")
+        return {
+            "best_bid": str(best_bid),
+            "best_ask": str(best_ask),
+            "spread": str(best_ask - best_bid),
+            "spread_bps": str(spread_bps.quantize(Decimal("0.01"))),
+            "bid_levels_received": len(bids),
+            "ask_levels_received": len(asks),
+        }
+
+    def recent_trades(self, market_id: int, limit: int = 50) -> list[dict[str, Any]]:
+        payload = self.get("recentTrades", {
+            "market_id": market_id,
+            "limit": min(max(int(limit), 1), 100),
+        })
+        rows = self._rows(payload, "trades", "recent_trades")
+        if not rows:
+            raise LighterAPIError("No recent trades returned")
         return rows
 
 
