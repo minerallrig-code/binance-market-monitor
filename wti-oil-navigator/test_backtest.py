@@ -1,6 +1,8 @@
 import unittest
 
 from backtest import _funding_cost_fraction, _series, run_backtest
+from market_data import LighterAPIError
+from run_backtest import fetch_funding_history
 
 
 def candles(start_ms, step_ms, values):
@@ -40,6 +42,17 @@ class BacktestTests(unittest.TestCase):
         records = [{"timestamp": 3600, "rate": "0.0004", "direction": "unknown"}]
         with self.assertRaises(ValueError):
             _funding_cost_fraction("LONG", 0, 7200000, records)
+
+    def test_funding_history_falls_back_to_daily_windows(self):
+        class FakeAPI:
+            def funding_history(self, market_id, start, end):
+                if end - start > 24 * 3600:
+                    raise LighterAPIError("HTTP Error 400: Bad Request")
+                return [{"timestamp": start + 3600, "rate": "0.0004", "direction": "long"}]
+
+        rows, skipped = fetch_funding_history(FakeAPI(), 145, 0, 7 * 24 * 3600)
+        self.assertEqual(len(rows), 7)
+        self.assertEqual(skipped, [])
 
     def test_insufficient_history_is_rejected(self):
         with self.assertRaises(ValueError):
