@@ -6,6 +6,7 @@ Costs are configurable assumptions because venue fees, spread and slippage vary.
 from __future__ import annotations
 
 from dataclasses import dataclass, asdict
+from bisect import bisect_right
 from math import isfinite
 from statistics import mean
 from typing import Any
@@ -93,7 +94,10 @@ def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
     rsi6 = _rsi_series(close, 6)
     rsi14 = _rsi_series(close, 14)
     atr = _atr_series(rows, 14)
+    duration_ms = _resolution_ms(rows)
+    close_times = [int(row["t"]) + duration_ms for row in rows]
     return {
+        "close_times": close_times,
         "close": close,
         "ema20": [v if isfinite(v) else None for v in ema20],
         "ema50": [v if isfinite(v) else None for v in ema50],
@@ -106,14 +110,10 @@ def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
 
 def _trend_at(candles: list[dict[str, Any]], series: dict[str, list[float | None]], time_ms: int) -> str | None:
     # Only use a higher-timeframe candle whose close timestamp is <= decision time.
-    duration_ms = _resolution_ms(candles)
-    eligible = [
-        i for i, candle in enumerate(candles)
-        if int(candle["t"]) + duration_ms <= time_ms
-    ]
-    if not eligible:
+    close_times = series["close_times"]
+    i = bisect_right(close_times, time_ms) - 1
+    if i < 0:
         return None
-    i = eligible[-1]
     close = series["close"][i]
     ema20, ema50 = series["ema20"][i], series["ema50"][i]
     if ema20 is None or ema50 is None:
