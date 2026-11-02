@@ -55,6 +55,17 @@ def analyze_news_response(news: dict[str, Any], candles_15m: list[dict[str, Any]
         for topic in set(event["topics"]):
             grouped.setdefault(topic, []).append(event)
 
+    baseline = {}
+    for horizon, bars in HORIZONS.items():
+        values = [(closes[i + bars] / closes[i] - 1) * 100 for i in range(len(closes) - bars) if closes[i] > 0]
+        if values:
+            baseline[horizon] = {
+                "n": len(values),
+                "mean_return_pct": round(mean(values), 4),
+                "median_return_pct": round(median(values), 4),
+                "positive_return_pct": round(sum(value > 0 for value in values) / len(values) * 100, 2),
+            }
+
     summary = {}
     for topic, events in grouped.items():
         horizons = {}
@@ -66,6 +77,8 @@ def analyze_news_response(news: dict[str, Any], candles_15m: list[dict[str, Any]
                     "mean_return_pct": round(mean(values), 4),
                     "median_return_pct": round(median(values), 4),
                     "positive_return_pct": round(sum(value > 0 for value in values) / len(values) * 100, 2),
+                    "excess_mean_vs_period_baseline_pct": round(mean(values) - baseline[horizon]["mean_return_pct"], 4),
+                    "positive_rate_difference_vs_baseline_pct_points": round(sum(value > 0 for value in values) / len(values) * 100 - baseline[horizon]["positive_return_pct"], 2),
                 }
         summary[topic] = {
             "headline_count": len(events),
@@ -76,6 +89,7 @@ def analyze_news_response(news: dict[str, Any], candles_15m: list[dict[str, Any]
     return {
         "status": "DESCRIPTIVE_ONLY",
         "events_matched": len(observations),
+        "period_baseline": baseline,
         "topics": summary,
         "sample_events": observations[:50],
         "warning": "Observed price changes after headlines are not proof of causation or predictive edge. Headlines may be duplicated, delayed, anticipated by markets, or published after price moves.",
