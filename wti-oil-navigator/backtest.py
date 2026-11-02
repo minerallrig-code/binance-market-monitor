@@ -96,6 +96,7 @@ def _signal_at(
     h1_s: dict[str, list[float | None]],
     h4: list[dict[str, Any]],
     h4_s: dict[str, list[float | None]],
+    entry_mode: str,
 ) -> str | None:
     candle = base[i]
     decision_time = int(candle["t"]) + _resolution_ms(base)
@@ -112,16 +113,33 @@ def _signal_at(
     if None in (rsi6, rsi14, hist, prev_hist, atr, ema20) or atr <= 0:
         return None
 
-    if trend1 == "LONG":
-        # Pullback recovery: RSI6 exits oversold, RSI14 regains momentum,
-        # and MACD histogram turns upward while 1h and 4h remain aligned.
-        if base_s["rsi6"][i - 1] is not None and base_s["rsi6"][i - 1] <= 30 and rsi6 > 30:
-            if rsi14 >= 45 and hist > prev_hist and float(candle["c"]) > ema20:
+    previous_close = float(base[i - 1]["c"])
+    previous_ema20 = base_s["ema20"][i - 1]
+    if entry_mode == "pullback_recovery":
+        if trend1 == "LONG":
+            if base_s["rsi6"][i - 1] is not None and base_s["rsi6"][i - 1] <= 30 and rsi6 > 30:
+                if rsi14 >= 45 and hist > prev_hist and float(candle["c"]) > ema20:
+                    return "LONG"
+        else:
+            if base_s["rsi6"][i - 1] is not None and base_s["rsi6"][i - 1] >= 70 and rsi6 < 70:
+                if rsi14 <= 55 and hist < prev_hist and float(candle["c"]) < ema20:
+                    return "SHORT"
+    elif entry_mode == "ema20_momentum_cross":
+        if previous_ema20 is None:
+            return None
+        if trend1 == "LONG" and previous_close <= previous_ema20 and float(candle["c"]) > ema20:
+            if rsi14 >= 50 and hist > 0 and hist > prev_hist:
                 return "LONG"
-    else:
-        if base_s["rsi6"][i - 1] is not None and base_s["rsi6"][i - 1] >= 70 and rsi6 < 70:
-            if rsi14 <= 55 and hist < prev_hist and float(candle["c"]) < ema20:
+        if trend1 == "SHORT" and previous_close >= previous_ema20 and float(candle["c"]) < ema20:
+            if rsi14 <= 50 and hist < 0 and hist < prev_hist:
                 return "SHORT"
+    elif entry_mode == "macd_zero_cross":
+        if trend1 == "LONG" and prev_hist <= 0 < hist and rsi14 >= 50 and float(candle["c"]) > ema20:
+            return "LONG"
+        if trend1 == "SHORT" and prev_hist >= 0 > hist and rsi14 <= 50 and float(candle["c"]) < ema20:
+            return "SHORT"
+    else:
+        raise ValueError(f"Unsupported entry_mode: {entry_mode}")
     return None
 
 
@@ -135,6 +153,7 @@ def run_backtest(
     fee_rate_per_side: float = 0.0005,
     slippage_bps_per_side: float = 2.0,
     max_holding_bars: int = 48,
+    entry_mode: str = "pullback_recovery",
 ) -> dict[str, Any]:
     """Return trade list and metrics. Entry occurs at next bar open (no lookahead)."""
     if min(len(candles_15m), len(candles_1h), len(candles_4h)) < 70:
@@ -156,7 +175,7 @@ def run_backtest(
         if i <= last_exit_i:
             i += 1
             continue
-        side = _signal_at(i, base, base_s, h1, h1_s, h4, h4_s)
+        side = _signal_at(i, base, base_s, h1, h1_s, h4, h4_s, entry_mode)
         atr = base_s["atr"][i]
         if side is None or atr is None:
             i += 1
@@ -231,6 +250,7 @@ def run_backtest(
                 "fee_rate_per_side": fee_rate_per_side,
                 "slippage_bps_per_side": slippage_bps_per_side,
                 "max_holding_bars": max_holding_bars,
+                "entry_mode": entry_mode,
                 "entry": "next 15m candle open after signal candle closes",
                 "same_bar_stop_target": "stop first (conservative)",
             },
@@ -273,6 +293,7 @@ def run_backtest(
             "fee_rate_per_side": fee_rate_per_side,
             "slippage_bps_per_side": slippage_bps_per_side,
             "max_holding_bars": max_holding_bars,
+            "entry_mode": entry_mode,
             "entry": "next 15m candle open after signal candle closes",
             "same_bar_stop_target": "stop first (conservative)",
             "funding_cost": "not included yet; requires verified funding timestamp/sign convention and position hold intervals",
