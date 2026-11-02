@@ -1,6 +1,6 @@
 import unittest
 
-from backtest import _series, run_backtest
+from backtest import _funding_cost_fraction, _series, run_backtest
 
 
 def candles(start_ms, step_ms, values):
@@ -23,6 +23,23 @@ class BacktestTests(unittest.TestCase):
         result = _series(candles(0, 900000, values))
         self.assertTrue(any(value is not None for value in result["hist"]))
         self.assertIsNotNone(result["hist"][-1])
+
+    def test_longs_pay_when_lighter_direction_is_long(self):
+        records = [{"timestamp": 3600, "rate": "0.0004", "direction": "long"}]
+        cost, count = _funding_cost_fraction("LONG", 0, 7200000, records)
+        self.assertAlmostEqual(cost, 0.000004)
+        self.assertEqual(count, 1)
+
+    def test_shorts_receive_when_lighter_direction_is_long(self):
+        records = [{"timestamp": 3600, "rate": "0.0004", "direction": "long"}]
+        cost, count = _funding_cost_fraction("SHORT", 0, 7200000, records)
+        self.assertAlmostEqual(cost, -0.000004)
+        self.assertEqual(count, 1)
+
+    def test_unknown_funding_direction_fails_closed(self):
+        records = [{"timestamp": 3600, "rate": "0.0004", "direction": "unknown"}]
+        with self.assertRaises(ValueError):
+            _funding_cost_fraction("LONG", 0, 7200000, records)
 
     def test_insufficient_history_is_rejected(self):
         with self.assertRaises(ValueError):
