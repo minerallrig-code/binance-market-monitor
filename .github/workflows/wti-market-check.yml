@@ -17,7 +17,7 @@ concurrency:
 jobs:
   market-data:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout WTI branch
         uses: actions/checkout@v4
@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run adapter unit tests
+      - name: Run all unit tests
         working-directory: wti-oil-navigator
         run: python -m unittest -v
 
@@ -41,10 +41,22 @@ jobs:
           WTI_OUTPUT_PATH: latest_snapshot.json
         run: python run_market_check.py
 
-      - name: Upload validated market snapshot
-        if: always() && hashFiles('wti-oil-navigator/latest_snapshot.json') != ''
+      - name: Run historical WTI backtest
+        working-directory: wti-oil-navigator
+        env:
+          LIGHTER_API_BASE: https://mainnet.zklighter.elliot.ai/api/v1
+          LIGHTER_SYMBOL: WTI
+          WTI_BACKTEST_OUTPUT_PATH: ../backtest-results/latest_backtest.json
+          BACKTEST_FEE_RATE_PER_SIDE: "0.0005"
+          BACKTEST_SLIPPAGE_BPS_PER_SIDE: "2.0"
+        run: python run_backtest.py
+
+      - name: Upload market snapshot and backtest
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: wti-market-snapshot
-          path: wti-oil-navigator/latest_snapshot.json
+          name: wti-market-and-backtest
+          path: |
+            wti-oil-navigator/latest_snapshot.json
+            backtest-results/latest_backtest.json
           retention-days: 7
