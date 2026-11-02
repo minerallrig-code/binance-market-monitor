@@ -106,9 +106,10 @@ def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
 
 def _trend_at(candles: list[dict[str, Any]], series: dict[str, list[float | None]], time_ms: int) -> str | None:
     # Only use a higher-timeframe candle whose close timestamp is <= decision time.
+    duration_ms = _resolution_ms(candles)
     eligible = [
         i for i, candle in enumerate(candles)
-        if int(candle["t"]) + _resolution_ms(candles) <= time_ms
+        if int(candle["t"]) + duration_ms <= time_ms
     ]
     if not eligible:
         return None
