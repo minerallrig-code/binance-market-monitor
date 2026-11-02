@@ -297,6 +297,8 @@ def run_backtest(
                 "entry_mode": entry_mode,
                 "entry": "next 15m candle open after signal candle closes",
                 "same_bar_stop_target": "stop first (conservative)",
+                "equity_curve_assumption": "100% of unlevered notional per sequential trade; not a position-sizing forecast",
+                "funding_cost": "not included; funding sign, interval and position hold timing require separate validation",
             },
         }
 
@@ -340,6 +342,7 @@ def run_backtest(
             "entry_mode": entry_mode,
             "entry": "next 15m candle open after signal candle closes",
             "same_bar_stop_target": "stop first (conservative)",
+            "equity_curve_assumption": "100% of unlevered notional per sequential trade; not a position-sizing forecast",
             "funding_cost": "not included yet; requires verified funding timestamp/sign convention and position hold intervals",
         },
     }
