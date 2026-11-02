@@ -114,6 +114,6 @@ def collect_news() -> dict[str, Any]:
         "unique_headlines": len(items),
         "query_counts": query_counts,
         "errors": errors,
-        "items": items[:40],
+        "items": items[:300],
         "interpretation": "Topic tags only. No automatic bullish/bearish interpretation; verify the original report and its timestamp.",
     }
