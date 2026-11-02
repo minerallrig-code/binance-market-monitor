@@ -9,6 +9,7 @@ from pathlib import Path
 
 from market_data import LighterAPIError, LighterPublicAPI
 from indicators import analyze_all_timeframes
+from news_ingest import collect_news
 
 TIMEFRAMES = {
     "1d": 86400,
@@ -58,6 +59,7 @@ def main() -> int:
     book = api.order_book_top(spec.market_id, limit=20)
     trades = api.recent_trades(spec.market_id, limit=50)
     technical = analyze_all_timeframes(market_data)
+    news = collect_news()
 
     result = {
         "status": "DATA_OK_NO_SIGNAL",
@@ -67,6 +69,7 @@ def main() -> int:
         "market": spec.__dict__,
         "timeframes": market_data,
         "technical_analysis": technical,
+        "news_context": news,
         "funding_history_48h": funding,
         "order_book_top": book,
         "recent_trades_count": len(trades),
@@ -89,6 +92,8 @@ def main() -> int:
         "recent_trades": len(trades),
         "technical_bias": technical["higher_timeframe_bias"],
         "signal": technical["signal"],
+        "news_status": news["status"],
+        "news_headlines": news["unique_headlines"],
         "snapshot": str(output),
     }, indent=2))
     return 0
