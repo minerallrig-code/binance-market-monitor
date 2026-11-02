@@ -50,10 +50,11 @@ A negative perpetual funding rate commonly means shorts pay longs, but do not in
 - Do not reuse crypto-bot leverage, margin, or indicator thresholds for WTI without testing.
 
 ## Current implementation status
-Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Live `market_id`, minimum order size, tick/price decimals, multiplier and current fee/funding details still need to be resolved from the API at runtime. Scaffold only; no live signal automation or trading is active.
+Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Added a GET-only Python adapter that discovers the active WTI perpetual dynamically and fetches market details/candles; it refuses ambiguous market matches. Unit tests cover market selection and fail-closed behavior. The live API call has not yet been executed in this environment, so the actual `market_id`, minimums, precision, multiplier and fee values remain unverified. No live signal automation or trading is active.
 
 ## Planned modules
-- market_data/: dynamic market discovery, contract adapter and candle validation
+- market_data.py: public API client, dynamic WTI discovery, market details and OHLC candles
+- test_market_data.py: unit tests for market selection and fail-closed behavior
 - news/: RSS/API ingestion, deduplication, event classification
 - analysis/: technical indicators and event/price alignment
 - signals/: confluence rules, risk model, stale-data guards
