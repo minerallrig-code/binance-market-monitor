@@ -30,6 +30,49 @@ class Trade:
     bars_held: int
 
 
+def _rsi_series(values: list[float], period: int) -> list[float | None]:
+    output: list[float | None] = [None] * len(values)
+    if len(values) <= period:
+        return output
+    changes = [values[i] - values[i - 1] for i in range(1, len(values))]
+    gains = [max(value, 0.0) for value in changes]
+    losses = [max(-value, 0.0) for value in changes]
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+
+    def value(gain: float, loss: float) -> float:
+        if loss == 0:
+            return 100.0 if gain > 0 else 50.0
+        rs = gain / loss
+        return 100.0 - (100.0 / (1.0 + rs))
+
+    output[period] = value(avg_gain, avg_loss)
+    for i in range(period + 1, len(values)):
+        gain, loss = gains[i - 1], losses[i - 1]
+        avg_gain = ((avg_gain * (period - 1)) + gain) / period
+        avg_loss = ((avg_loss * (period - 1)) + loss) / period
+        output[i] = value(avg_gain, avg_loss)
+    return output
+
+
+def _atr_series(candles: list[dict[str, Any]], period: int = 14) -> list[float | None]:
+    output: list[float | None] = [None] * len(candles)
+    if len(candles) <= period:
+        return output
+    true_ranges = []
+    previous_close = float(candles[0]["c"])
+    for candle in candles[1:]:
+        high, low, close = float(candle["h"]), float(candle["l"]), float(candle["c"])
+        true_ranges.append(max(high - low, abs(high - previous_close), abs(low - previous_close)))
+        previous_close = close
+    current = sum(true_ranges[:period]) / period
+    output[period] = current
+    for i in range(period + 1, len(candles)):
+        current = ((current * (period - 1)) + true_ranges[i - 1]) / period
+        output[i] = current
+    return output
+
+
 def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
     rows = sorted(candles, key=lambda row: int(row["t"]))
     close = [float(row["c"]) for row in rows]
@@ -47,9 +90,9 @@ def _series(candles: list[dict[str, Any]]) -> dict[str, list[float | None]]:
         signal_value = macd_signal_valid[offset]
         if isfinite(value) and isfinite(signal_value):
             hist[macd_start + offset] = value - signal_value
-    rsi6 = [_rsi(close[:i + 1], 6) for i in range(len(close))]
-    rsi14 = [_rsi(close[:i + 1], 14) for i in range(len(close))]
-    atr = [_atr(rows[:i + 1], 14) for i in range(len(rows))]
+    rsi6 = _rsi_series(close, 6)
+    rsi14 = _rsi_series(close, 14)
+    atr = _atr_series(rows, 14)
     return {
         "close": close,
         "ema20": [v if isfinite(v) else None for v in ema20],
