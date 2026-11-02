@@ -17,7 +17,7 @@ from news_ingest import collect_news
 from event_study import analyze_news_response
 
 SECONDS = {"15m": 900, "1h": 3600, "4h": 14400}
-DEFAULT_BARS = {"15m": 3000, "1h": 1000, "4h": 500}
+DEFAULT_BARS = {"15m": 6000, "1h": 1500, "4h": 400}
 ENTRY_MODES = ("pullback_recovery", "ema20_momentum_cross", "macd_zero_cross")
 
 
