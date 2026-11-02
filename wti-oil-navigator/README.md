@@ -50,18 +50,33 @@ A negative perpetual funding rate commonly means shorts pay longs, but do not in
 - Do not reuse crypto-bot leverage, margin, or indicator thresholds for WTI without testing.
 
 ## Current implementation status
-Instrument venue and symbol mapping are identified: Lighter `WTI-USDC` perpetual, market slug `lighter:wti`, Pyth Lazer oracle. Live GitHub Actions validation passed on 2026-11-02. Lighter returned the active WTI perpetual with `market_id=145`, minimum base amount `0.060`, minimum quote amount `10 USDC`, size/price precision 3/3, multiplier 1.0, and current API-reported maker/taker fees `0.0000` (verify again at each run). The run validated 119 closed candles per timeframe, 48 funding records, 50 recent trades, and top-of-book spread. Technical context and 267 deduplicated news headlines were collected; the sample produced `MIXED` higher-timeframe bias and `WAIT`, not a trade signal. Hourly GitHub Actions scheduling activates only after this branch is merged to the repository's default branch. No order execution exists.
 
-## Planned modules
-- `market_data.py`: public API client, dynamic WTI discovery, market details, OHLC candles, funding, order-book spread and recent trades
-- `indicators.py`: RSI(6/14/24), EMA(20/50), MACD, ATR and volume context; currently emits WAIT only
-- `news_ingest.py`: four Google News RSS searches, publisher attribution, deduplication and topic tags; no automatic sentiment inference
-- `run_market_check.py`: validates market data across 1D/4H/1H/15M/5M and writes a JSON snapshot
-- `test_*.py`: unit tests for market discovery, indicators and news tagging
-- `.github/workflows/wti-market-check.yml`: pull-request, manual and hourly read-only checks (hourly schedule activates after merge to the default branch)
-- news/: RSS/API ingestion, deduplication, event classification
-- analysis/: technical indicators and event/price alignment
-- signals/: confluence rules, risk model, stale-data guards
-- storage/: SQLite signal and outcome journal
-- delivery/: Telegram notifications
-- tests/: unit tests and historical replay
+The read-only pipeline has passed live GitHub Actions validation on 2026-11-02:
+- Active Lighter WTI perpetual discovered dynamically as `WTI-USDC`, `market_id=145`.
+- Live contract metadata returned minimum base amount `0.060`, minimum quote amount `10 USDC`, size/price precision 3/3 and multiplier 1.0. API fee fields currently returned `0.0000`; these values must be checked every run and are not treated as a guarantee of zero execution cost.
+- Market snapshots collect 1D/4H/1H/15M/5M candles, funding history, top-of-book spread, recent trades and technical indicators.
+- Historical research fetches 3,000 15m, 1,000 1h and 500 4h candles (roughly 31, 42 and 83 days respectively), then compares three fixed entry models using a chronological 70% in-sample / 30% holdout split.
+- The latest completed replay showed very small sample counts: pullback recovery 1 in-sample / 0 holdout trades; EMA20 momentum cross 6 / 1; MACD zero cross 27 / 2. EMA20's holdout trade lost 0.53%; MACD zero-cross holdout had two trades and +0.21%. These are far too few observations to establish an edge. No strategy is approved for live signals.
+- Replay assumptions: 1.5 ATR stop, 2R target, next 15m open entry, stop-first if stop and target touch in the same candle, 0.05% assumed fee per side and 2 bps assumed slippage per side. Funding is not yet included. Equity return compounds sequentially at 100% unlevered notional and is not a position-sizing forecast.
+- News ingestion collected 206 recent headlines in the latest run. Event study clustered overlapping topic windows and compared post-headline returns with non-overlapping same-period price windows. Results remain descriptive only; news timing, anticipation, broad market trend and overlapping macro events prevent causal or predictive conclusions.
+- Latest validated run: https://github.com/minerallrig-code/binance-market-monitor/actions/runs/41423901510
+- Hourly schedule activates only after the draft PR is merged into the repository's default branch. No wallet credentials, signing, order placement or live trading are included.
+
+## Implemented modules
+- `market_data.py`: public Lighter API client, dynamic WTI discovery, contract details, candles, funding, order-book spread and recent trades
+- `indicators.py`: RSI(6/14/24), EMA(20/50), MACD, ATR, volume and multi-timeframe bias
+- `news_ingest.py`: Google News RSS searches, publisher attribution, deduplication and topic tags
+- `event_study.py`: post-headline 1h/4h/24h price response, clustered by topic/time window and compared with same-period baseline
+- `backtest.py`: no-lookahead replay with ATR stops, 2R target, conservative same-candle stop handling and configurable costs
+- `run_market_check.py`: live market-data validation and JSON snapshot
+- `run_backtest.py`: paginated history retrieval, model comparison and 70/30 chronological holdout
+- `test_*.py`: unit tests for market discovery, indicators, news, event study and backtest
+- `.github/workflows/wti-market-check.yml`: pull-request, manual and hourly read-only checks
+
+## Next gates before any signal is enabled
+1. Extend the historical sample and obtain a materially larger number of independent trades.
+2. Validate funding sign, settlement interval and funding costs from actual Lighter records.
+3. Improve news event clustering and verify source publication timestamps against original articles.
+4. Run walk-forward tests across distinct volatility/regime periods, including realistic fees, spread, slippage and funding.
+5. Define user-approved WTI position sizing and maximum loss per trade. Crypto leverage settings are not reused.
+6. Only after those gates, consider producing manual-confirmation LONG/SHORT signals. Automatic execution remains out of scope.
