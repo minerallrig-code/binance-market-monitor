@@ -8,7 +8,6 @@ import json
 import os
 import time
 from dataclasses import asdict, dataclass
-from decimal import Decimal
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -129,8 +128,8 @@ class LighterPublicAPI:
             min_quote_amount=value("min_quote_amount"),
             maker_fee=value("maker_fee"),
             taker_fee=value("taker_fee"),
-            size_decimals=integer("size_decimals") or integer("supported_size_decimals"),
-            price_decimals=integer("price_decimals") or integer("supported_price_decimals"),
+            size_decimals=integer("size_decimals") if integer("size_decimals") is not None else integer("supported_size_decimals"),
+            price_decimals=integer("price_decimals") if integer("price_decimals") is not None else integer("supported_price_decimals"),
             multiplier=value("multiplier"),
             mark_price=value("mark_price"),
             index_price=value("index_price"),
@@ -164,8 +163,10 @@ class LighterPublicAPI:
     ) -> list[dict[str, Any]]:
         payload = self.get("fundings", {
             "market_id": market_id,
+            "resolution": "1h",
             "start_timestamp": start_timestamp,
             "end_timestamp": end_timestamp,
+            "count_back": min(max((end_timestamp - start_timestamp) // 3600, 1), 500),
         })
         rows = self._rows(payload, "fundings", "funding")
         # Funding timestamps have been observed in seconds, unlike candle timestamps.
