@@ -52,18 +52,42 @@ def fetch_history(api: LighterPublicAPI, market_id: int, resolution: str, now: i
 
 def fetch_funding_history(api: LighterPublicAPI, market_id: int, start_seconds: int, end_seconds: int):
     collected = {}
+    skipped_windows = []
     cursor = start_seconds
-    pages = 0
-    while cursor < end_seconds and pages < 20:
-        window_end = min(cursor + 500 * 3600, end_seconds)
-        rows = api.funding_history(market_id, cursor, window_end)
-        for row in rows:
-            timestamp = int(row["timestamp"])
-            if start_seconds <= timestamp <= end_seconds:
-                collected[timestamp] = row
+    while cursor < end_seconds:
+        window_end = min(cursor + 168 * 3600, end_seconds)  # seven-day chunks
+        try:
+            rows = api.funding_history(market_id, cursor, window_end)
+            for row in rows:
+                timestamp = int(row["timestamp"])
+                if start_seconds <= timestamp <= end_seconds:
+                    collected[timestamp] = row
+        except LighterAPIError as week_error:
+            # Some markets return HTTP 400 for a range that overlaps pre-listing
+            # history or exceeds the endpoint's accepted window. Retry daily.
+            day_start = cursor
+            while day_start < window_end:
+                day_end = min(day_start + 24 * 3600, window_end)
+                try:
+                    rows = api.funding_history(market_id, day_start, day_end)
+                    for row in rows:
+                        timestamp = int(row["timestamp"])
+                        if start_seconds <= timestamp <= end_seconds:
+                            collected[timestamp] = row
+                except LighterAPIError as day_error:
+                    skipped_windows.append({
+                        "start_timestamp": day_start,
+                        "end_timestamp": day_end,
+                        "error": str(day_error)[:240],
+                    })
+                day_start = day_end
         cursor = window_end
-        pages += 1
-    return sorted(collected.values(), key=lambda row: int(row["timestamp"]))
+    if not collected:
+        raise LighterAPIError(
+            "No historical funding records could be fetched; refusing to backtest without funding cost data. "
+            + (skipped_windows[0]["error"] if skipped_windows else "")
+        )
+    return sorted(collected.values(), key=lambda row: int(row["timestamp"])), skipped_windows
 
 
 def _run_model(base, hourly, four_hour, mode, fee, slippage, funding_records):
@@ -108,7 +132,7 @@ def main() -> int:
     fee = float(os.getenv("BACKTEST_FEE_RATE_PER_SIDE", "0.0005"))
     slippage = float(os.getenv("BACKTEST_SLIPPAGE_BPS_PER_SIDE", "2.0"))
     funding_start = int(candles["15m"][0]["t"]) // 1000
-    funding_records = fetch_funding_history(api, spec.market_id, funding_start, now)
+    funding_records, funding_skipped_windows = fetch_funding_history(api, spec.market_id, funding_start, now)
     results = [
         _run_model(candles["15m"], candles["1h"], candles["4h"], mode, fee, slippage, funding_records)
         for mode in ENTRY_MODES
@@ -140,7 +164,8 @@ def main() -> int:
             "first_timestamp": funding_records[0]["timestamp"] if funding_records else None,
             "last_timestamp": funding_records[-1]["timestamp"] if funding_records else None,
             "direction_convention": "Lighter direction=long means longs pay shorts; direction=short means shorts pay longs",
-            "coverage_note": "Historical records are applied only at payment timestamps within each simulated holding interval; missing hours are not interpolated.",
+            "skipped_windows": funding_skipped_windows,
+            "coverage_note": "Historical records are applied only at payment timestamps within each simulated holding interval; missing hours are not interpolated. Trades before the first returned funding record may be under-adjusted.",
         },
         "models": results,
         "news_status": news["status"],
