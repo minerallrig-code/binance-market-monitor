@@ -26,6 +26,8 @@ class EventStudyTests(unittest.TestCase):
         self.assertEqual(result["events_matched"], 1)
         self.assertIn("opec", result["topics"])
         self.assertIn("1h", result["topics"]["opec"]["forward_returns"])
+        self.assertIn("period_baseline", result)
+        self.assertIn("excess_mean_vs_period_baseline_pct", result["topics"]["opec"]["forward_returns"]["1h"])
         self.assertIn("causation", result["warning"])
 
     def test_rejects_insufficient_history(self):
