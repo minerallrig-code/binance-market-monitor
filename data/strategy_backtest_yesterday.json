@@ -1,5 +1,5 @@
 {
-  "date_vietnam": "2026-11-02",
+  "date_vietnam": "2026-11-03",
   "method": "LONG-only historical signal audit: 1h EMA20/50 trend + 15m close above EMA20, RSI14 50-70 and positive MACD histogram; 5m RSI6/MACD rising is context only. Entry at next 15m open; measure next 1h high/low excursion. No fees, slippage, funding, stop/target or position sizing. Not a profitability backtest.",
   "symbols": {
     "BTCUSDT": {
@@ -9,8 +9,44 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 0,
-      "results": []
+      "signals": 5,
+      "results": [
+        {
+          "time_utc": "2026-11-03T14:45:00+00:00",
+          "entry": 2286.38,
+          "max_up_pct_1h": 0.705,
+          "max_down_pct_1h": -0.2353,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-03T15:00:00+00:00",
+          "entry": 2289.86,
+          "max_up_pct_1h": 0.552,
+          "max_down_pct_1h": -0.331,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-03T15:30:00+00:00",
+          "entry": 2294.14,
+          "max_up_pct_1h": 0.3644,
+          "max_down_pct_1h": -0.4586,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-03T15:45:00+00:00",
+          "entry": 2298.5,
+          "max_up_pct_1h": 0.0653,
+          "max_down_pct_1h": -0.6474,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-03T16:00:00+00:00",
+          "entry": 2292.72,
+          "max_up_pct_1h": 0.2831,
+          "max_down_pct_1h": -0.3969,
+          "5m_early_turn": false
+        }
+      ]
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
