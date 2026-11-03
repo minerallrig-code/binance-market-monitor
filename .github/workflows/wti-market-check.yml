@@ -1,0 +1,62 @@
+name: WTI Oil Navigator — market data check
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+  schedule:
+    - cron: "13 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wti-market-research-v2-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  market-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout WTI branch
+        uses: actions/checkout@v4
+        with:
+          ref: wti-oil-navigator
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run all unit tests
+        working-directory: wti-oil-navigator
+        run: python -m unittest -v
+
+      - name: Fetch and validate public WTI market data
+        working-directory: wti-oil-navigator
+        env:
+          LIGHTER_API_BASE: https://mainnet.zklighter.elliot.ai/api/v1
+          LIGHTER_SYMBOL: WTI
+          WTI_OUTPUT_PATH: latest_snapshot.json
+        run: python run_market_check.py
+
+      - name: Run historical WTI backtest
+        working-directory: wti-oil-navigator
+        env:
+          LIGHTER_API_BASE: https://mainnet.zklighter.elliot.ai/api/v1
+          LIGHTER_SYMBOL: WTI
+          WTI_BACKTEST_OUTPUT_PATH: ../backtest-results/latest_backtest.json
+          BACKTEST_FEE_RATE_PER_SIDE: "0.0005"
+          BACKTEST_SLIPPAGE_BPS_PER_SIDE: "2.0"
+        run: python run_backtest.py
+
+      - name: Upload market snapshot and backtest
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: wti-market-and-backtest
+          path: |
+            wti-oil-navigator/latest_snapshot.json
+            backtest-results/latest_backtest.json
+          retention-days: 7
