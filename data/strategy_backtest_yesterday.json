@@ -9,58 +9,8 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 7,
-      "results": [
-        {
-          "time_utc": "2026-11-02T12:15:00+00:00",
-          "entry": 2291.73,
-          "max_up_pct_1h": 0.0214,
-          "max_down_pct_1h": -0.6283,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-02T13:30:00+00:00",
-          "entry": 2296.04,
-          "max_up_pct_1h": 0.1633,
-          "max_down_pct_1h": -0.5993,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-02T14:30:00+00:00",
-          "entry": 2288.41,
-          "max_up_pct_1h": 0.4807,
-          "max_down_pct_1h": -0.2272,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-02T14:45:00+00:00",
-          "entry": 2290.87,
-          "max_up_pct_1h": 0.3728,
-          "max_down_pct_1h": -1.2161,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-02T15:00:00+00:00",
-          "entry": 2294.66,
-          "max_up_pct_1h": 0.0397,
-          "max_down_pct_1h": -1.4922,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-02T15:15:00+00:00",
-          "entry": 2291.04,
-          "max_up_pct_1h": 0.1074,
-          "max_down_pct_1h": -1.3365,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-02T15:30:00+00:00",
-          "entry": 2290.94,
-          "max_up_pct_1h": 0.1117,
-          "max_down_pct_1h": -1.3322,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
