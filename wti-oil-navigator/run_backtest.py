@@ -17,7 +17,7 @@ from news_ingest import collect_news
 from event_study import analyze_news_response
 
 SECONDS = {"15m": 900, "1h": 3600, "4h": 14400}
-DEFAULT_BARS = {"15m": 6000, "1h": 1500, "4h": 400}
+DEFAULT_BARS = {"15m": 8640, "1h": 2160, "4h": 540}  # target ~90 days
 ENTRY_MODES = ("pullback_recovery", "ema20_momentum_cross", "macd_zero_cross")
 
 
@@ -27,7 +27,7 @@ def fetch_history(api: LighterPublicAPI, market_id: int, resolution: str, now: i
     cursor_end = now
     previous_oldest = None
     pages = 0
-    while len(collected) < target_bars and pages < 20:
+    while len(collected) < target_bars and pages < 24:
         start = cursor_end - 500 * seconds
         rows = api.candles(market_id, resolution, start, cursor_end, 500)
         if not rows:
@@ -105,10 +105,28 @@ def _run_model(base, hourly, four_hour, mode, fee, slippage, funding_records):
     in_sample = run_backtest(base[:split], hourly, four_hour, funding_records=funding_records, **common)
     holdout = run_backtest(base[split:], hourly, four_hour, funding_records=funding_records, **common)
     full = run_backtest(base, hourly, four_hour, funding_records=funding_records, **common)
+    # Three sequential slices expose time-period sensitivity without tuning on
+    # the final holdout. Higher-timeframe inputs remain timestamp-aligned.
+    thirds = []
+    for index in range(3):
+        left = len(base) * index // 3
+        right = len(base) * (index + 1) // 3
+        segment = base[left:right]
+        if len(segment) < 70:
+            continue
+        replay = run_backtest(segment, hourly, four_hour, funding_records=funding_records, **common)
+        thirds.append({
+            "period": index + 1,
+            "start_ms": int(segment[0]["t"]),
+            "end_ms": int(segment[-1]["t"]),
+            "trade_count": replay["trade_count"],
+            "metrics": replay["metrics"],
+        })
     return {
         "entry_mode": mode,
         "in_sample": {"trade_count": in_sample["trade_count"], "metrics": in_sample["metrics"]},
         "holdout": {"trade_count": holdout["trade_count"], "metrics": holdout["metrics"]},
+        "chronological_thirds": thirds,
         "full_sample": {"trade_count": full["trade_count"], "metrics": full["metrics"]},
         "assumptions": full["assumptions"],
         "holdout_trades": holdout["trades"],
@@ -172,7 +190,7 @@ def main() -> int:
         "news_headlines_collected": news["unique_headlines"],
         "news_event_study": event_study,
         "fetched_at_utc": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(now)),
-        "warning": "Historical replay is not proof of future profitability. Funding is not included yet. Holdout is not to be used for parameter tuning.",
+        "warning": "Historical replay is not proof of future profitability. Funding is included from returned hourly records; missing hours are not interpolated. Holdout is not to be used for parameter tuning. Chronological thirds are sensitivity checks, not independently identified market regimes.",
     }
     output = Path(os.getenv("WTI_BACKTEST_OUTPUT_PATH", "backtest-results/latest_backtest.json"))
     output.parent.mkdir(parents=True, exist_ok=True)
