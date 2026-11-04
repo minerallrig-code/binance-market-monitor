@@ -52,15 +52,8 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 19,
+      "signals": 18,
       "results": [
-        {
-          "time_utc": "2026-11-03T21:45:00+00:00",
-          "entry": 2293.6,
-          "max_up_pct_1h": 0.0288,
-          "max_down_pct_1h": -0.2978,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-11-04T04:45:00+00:00",
           "entry": 2279.07,
@@ -197,21 +190,21 @@
           "time_utc": "2026-11-04T16:15:00+00:00",
           "entry": 96.6,
           "max_up_pct_1h": 0.383,
-          "max_down_pct_1h": -0.8489,
+          "max_down_pct_1h": -0.9938,
           "5m_early_turn": false
         },
         {
           "time_utc": "2026-11-04T16:30:00+00:00",
           "entry": 96.87,
           "max_up_pct_1h": 0.1032,
-          "max_down_pct_1h": -1.1252,
+          "max_down_pct_1h": -1.4556,
           "5m_early_turn": false
         },
         {
           "time_utc": "2026-11-04T16:45:00+00:00",
           "entry": 96.64,
           "max_up_pct_1h": 0.0724,
-          "max_down_pct_1h": -0.8899,
+          "max_down_pct_1h": -1.221,
           "5m_early_turn": false
         }
       ]
