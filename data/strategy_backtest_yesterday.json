@@ -9,106 +9,13 @@
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 1,
-      "results": [
-        {
-          "time_utc": "2026-11-05T11:45:00+00:00",
-          "entry": 2420.59,
-          "max_up_pct_1h": 0.0021,
-          "max_down_pct_1h": -1.4244,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 12,
-      "results": [
-        {
-          "time_utc": "2026-11-05T08:15:00+00:00",
-          "entry": 96.72,
-          "max_up_pct_1h": 0.3309,
-          "max_down_pct_1h": -0.3722,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T08:30:00+00:00",
-          "entry": 96.54,
-          "max_up_pct_1h": 0.2382,
-          "max_down_pct_1h": -0.1865,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T08:45:00+00:00",
-          "entry": 96.76,
-          "max_up_pct_1h": 0.1033,
-          "max_down_pct_1h": -0.4134,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T09:00:00+00:00",
-          "entry": 96.39,
-          "max_up_pct_1h": 0.5602,
-          "max_down_pct_1h": -0.0311,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T09:15:00+00:00",
-          "entry": 96.58,
-          "max_up_pct_1h": 0.3624,
-          "max_down_pct_1h": -0.0932,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T09:30:00+00:00",
-          "entry": 96.55,
-          "max_up_pct_1h": 0.3936,
-          "max_down_pct_1h": -0.0207,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T09:45:00+00:00",
-          "entry": 96.81,
-          "max_up_pct_1h": 0.124,
-          "max_down_pct_1h": -0.3925,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T10:00:00+00:00",
-          "entry": 96.75,
-          "max_up_pct_1h": 0.1757,
-          "max_down_pct_1h": -0.3307,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T10:15:00+00:00",
-          "entry": 96.79,
-          "max_up_pct_1h": 0.0517,
-          "max_down_pct_1h": -0.3823,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T10:30:00+00:00",
-          "entry": 96.62,
-          "max_up_pct_1h": 0.1759,
-          "max_down_pct_1h": -0.207,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T10:45:00+00:00",
-          "entry": 96.57,
-          "max_up_pct_1h": 0.2278,
-          "max_down_pct_1h": -0.176,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-05T11:00:00+00:00",
-          "entry": 96.56,
-          "max_up_pct_1h": 0.2382,
-          "max_down_pct_1h": -0.5178,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     }
   }
 }
