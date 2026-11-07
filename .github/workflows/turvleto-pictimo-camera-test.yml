@@ -26,7 +26,6 @@ jobs:
           from io import BytesIO
 
           cameras = [
-              ("Nha Trang camera 44577", "https://images.pictimo.com/storage/live_thumbs/orig_44577.jpg"),
               ("Nha Trang camera 46067", "https://images.pictimo.com/storage/live_thumbs/orig_46067.jpg"),
           ]
           session = requests.Session()
