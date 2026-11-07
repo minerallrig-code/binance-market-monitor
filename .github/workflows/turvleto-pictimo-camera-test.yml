@@ -82,9 +82,31 @@ jobs:
               usable.append((camera_name, snapshots[-1][2]))
 
           if not usable:
-              print("No camera passed freshness checks. No video will be sent to Telegram.")
+              message = (
+                  "⚠️ ТУР В ЛЕТО — тест камер Нячанга\\n\\n"
+                  "Свежие кадры не подтверждены. Видео сегодня не сформировано. "
+                  "Архивные или неподвижные изображения в публикацию не отправляем."
+              )
               with open("camera_status.txt", "w", encoding="utf-8") as f:
-                  f.write("No camera passed freshness checks.\n")
+                  f.write(message + "\\n")
+              token = os.environ["TELEGRAM_BOT_TOKEN"]
+              data = {
+                  "chat_id": os.environ["TELEGRAM_CHAT_ID"],
+                  "text": message,
+              }
+              if os.getenv("TELEGRAM_MESSAGE_THREAD_ID"):
+                  data["message_thread_id"] = os.environ["TELEGRAM_MESSAGE_THREAD_ID"]
+              response = requests.post(
+                  f"https://api.telegram.org/bot{token}/sendMessage",
+                  json=data,
+                  timeout=30,
+              )
+              result = response.json()
+              if response.status_code >= 400 or not result.get("ok"):
+                  raise RuntimeError(
+                      f"Telegram status message failed: {result.get('description', response.status_code)}"
+                  )
+              print("Camera status notification sent; message_id =", result["result"]["message_id"])
               raise SystemExit(0)
 
           # Create a vertical slideshow only from cameras whose snapshots changed.
