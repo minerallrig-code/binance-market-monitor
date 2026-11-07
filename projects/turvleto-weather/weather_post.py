@@ -132,7 +132,8 @@ def make_video(png_path, mp4_path):
 
 def send_video(video_path, weather):
     token = os.environ["TELEGRAM_BOT_TOKEN"]
-    chat_id = os.environ.get("TELEGRAM_CHAT_ID", "@chat100turvietnam")
+    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+    thread_id = os.environ.get("TELEGRAM_MESSAGE_THREAD_ID")
     caption = (
         f'☀️ Погода в Нячанге сегодня: {weather["temp"]}°C, '
         f'{weather_description(weather["code"]).lower()}\n'
@@ -143,7 +144,11 @@ def send_video(video_path, weather):
     with open(video_path, "rb") as video:
         response = requests.post(
             url,
-            data={"chat_id": chat_id, "caption": caption},
+            data={
+                "chat_id": chat_id,
+                "caption": caption,
+                **({"message_thread_id": thread_id} if thread_id else {}),
+            },
             files={"video": ("nha-trang-weather.mp4", video, "video/mp4")},
             timeout=120,
         )
@@ -165,12 +170,12 @@ def send_video(video_path, weather):
 
 def main():
     weather = get_weather()
-    with tempfile.TemporaryDirectory() as tmp:
-        png_path = os.path.join(tmp, "weather.png")
-        mp4_path = os.path.join(tmp, "weather.mp4")
-        make_card(weather, png_path)
-        make_video(png_path, mp4_path)
-        send_video(mp4_path, weather)
+    png_path = os.path.abspath("weather.png")
+    mp4_path = os.path.abspath("weather.mp4")
+    make_card(weather, png_path)
+    make_video(png_path, mp4_path)
+    print(f"Video generated: {mp4_path}")
+    send_video(mp4_path, weather)
 
 
 if __name__ == "__main__":
