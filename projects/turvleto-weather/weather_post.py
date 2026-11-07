@@ -2,6 +2,7 @@ import os
 import math
 import subprocess
 import tempfile
+import re
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -119,15 +120,80 @@ def make_card(weather, output_png):
     image.save(output_png, quality=95)
 
 
-def make_video(png_path, mp4_path):
-    cmd = [
-        "ffmpeg", "-y", "-loop", "1", "-i", png_path,
-        "-t", "12", "-vf",
-        "scale=1080:1920,zoompan=z='min(zoom+0.00035,1.035)':d=1:s=1080x1920:fps=25,format=yuv420p",
-        "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
-        "-movflags", "+faststart", mp4_path,
+
+CAMERA_PAGE = "https://nhatrang.live/ru/kamery/"
+CAMERA_SECONDS = 4
+
+
+def get_camera_ids():
+    response = requests.get(CAMERA_PAGE, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
+    response.raise_for_status()
+    patterns = [
+        r"(?:youtube\.com/embed/|youtube-nocookie\.com/embed/)([A-Za-z0-9_-]{11})",
+        r"youtube\.com/(?:live/|watch\?v=)([A-Za-z0-9_-]{11})",
+        r"youtu\.be/([A-Za-z0-9_-]{11})",
     ]
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    found = []
+    for pattern in patterns:
+        for video_id in re.findall(pattern, response.text):
+            if video_id not in found:
+                found.append(video_id)
+    if not found:
+        raise RuntimeError("No YouTube camera embeds found on the Nha Trang webcam page")
+    return found[:2]
+
+
+def record_camera_clip(video_id, output_path):
+    page_url = f"https://www.youtube.com/watch?v={video_id}"
+    result = subprocess.run(
+        ["yt-dlp", "--no-warnings", "-f", "best[height<=720]/best", "-g", page_url],
+        check=True, capture_output=True, text=True, timeout=60,
+    )
+    stream_url = result.stdout.strip().splitlines()[0]
+    vf = (
+        "scale=1080:1920:force_original_aspect_ratio=increase,"
+        "crop=1080:1920,setsar=1,"
+        "drawbox=x=35:y=55:w=1010:h=150:color=0x063f46@0.72:t=fill,"
+        "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
+        "text='TUR V LETO  |  NHA TRANG':fontcolor=white:fontsize=42:x=65:y=105"
+    )
+    subprocess.run(
+        ["ffmpeg", "-y", "-loglevel", "error", "-i", stream_url,
+         "-t", str(CAMERA_SECONDS), "-vf", vf, "-an", "-r", "25",
+         "-c:v", "libx264", "-preset", "veryfast", "-crf", "25",
+         "-pix_fmt", "yuv420p", output_path],
+        check=True, timeout=90,
+    )
+
+
+def make_video(png_path, mp4_path):
+    with tempfile.TemporaryDirectory() as tmp:
+        camera_ids = get_camera_ids()
+        clips = []
+        for index, video_id in enumerate(camera_ids):
+            clip_path = os.path.join(tmp, f"camera_{index}.mp4")
+            record_camera_clip(video_id, clip_path)
+            clips.append(clip_path)
+
+        card_path = os.path.join(tmp, "weather_card.mp4")
+        subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-loop", "1", "-i", png_path,
+             "-t", "5", "-vf",
+             "scale=1080:1920,zoompan=z='min(zoom+0.00035,1.035)':d=1:s=1080x1920:fps=25,format=yuv420p",
+             "-an", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23",
+             "-movflags", "+faststart", card_path],
+            check=True, timeout=60,
+        )
+        concat_file = os.path.join(tmp, "concat.txt")
+        ordered = clips + [clips[0], card_path]
+        with open(concat_file, "w", encoding="utf-8") as handle:
+            for path in ordered:
+                handle.write(f"file '{path}'\n")
+        subprocess.run(
+            ["ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
+             "-i", concat_file, "-c", "copy", "-movflags", "+faststart", mp4_path],
+            check=True, timeout=60,
+        )
 
 
 def send_video(video_path, weather):
