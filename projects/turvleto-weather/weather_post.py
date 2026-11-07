@@ -3,6 +3,7 @@ import math
 import subprocess
 import tempfile
 import re
+import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
@@ -128,20 +129,65 @@ CAMERA_SECONDS = 4
 def get_camera_ids():
     response = requests.get(CAMERA_PAGE, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
-    patterns = [
-        r"(?:youtube\.com/embed/|youtube-nocookie\.com/embed/)([A-Za-z0-9_-]{11})",
-        r"youtube\.com/(?:live/|watch\?v=)([A-Za-z0-9_-]{11})",
-        r"youtu\.be/([A-Za-z0-9_-]{11})",
-    ]
-    found = []
-    for pattern in patterns:
-        for video_id in re.findall(pattern, response.text):
-            if video_id not in found:
-                found.append(video_id)
-    if not found:
-        raise RuntimeError("No YouTube camera embeds found on the Nha Trang webcam page")
-    return found[:2]
 
+    # The webcam page links to YouTube channels; it does not expose /embed/ IDs
+    # in its server-rendered HTML. Resolve each channel's current live stream
+    # through yt-dlp instead of searching only for iframe embed URLs.
+    channel_pattern = (
+        r"""https?://(?:www\.)?youtube\.com/"""
+        r"""(?:@[\w.-]+|channel/[\w-]+|c/[\w.-]+|user/[\w.-]+)"""
+    )
+    channels = []
+    for channel_url in re.findall(channel_pattern, response.text):
+        channel_url = channel_url.rstrip("/")
+        if channel_url not in channels:
+            channels.append(channel_url)
+
+    if not channels:
+        # Page content can be rendered by its CMS with relative/protocol-relative links.
+        for handle in re.findall(r"""(?:youtube\.com/)(@[\w.-]+)""", response.text):
+            channel_url = "https://www.youtube.com/" + handle
+            if channel_url not in channels:
+                channels.append(channel_url)
+
+    found = []
+    for channel_url in channels:
+        try:
+            result = subprocess.run(
+                ["yt-dlp", "--flat-playlist", "--dump-single-json",
+                 channel_url + "/streams"],
+                check=True, capture_output=True, text=True, timeout=75,
+            )
+            playlist = json.loads(result.stdout)
+            entries = playlist.get("entries") or []
+            live_entries = [
+                entry for entry in entries
+                if entry and (
+                    entry.get("is_live") is True
+                    or entry.get("live_status") == "is_live"
+                )
+            ]
+            candidates = live_entries or [
+                entry for entry in entries
+                if entry and entry.get("id")
+                and entry.get("live_status") not in ("was_live", "not_live")
+            ]
+            for entry in candidates:
+                video_id = entry.get("id")
+                if video_id and video_id not in found:
+                    found.append(video_id)
+                if len(found) == 2:
+                    return found
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+                json.JSONDecodeError) as error:
+            print(f"Could not resolve live stream from {channel_url}: {error}")
+
+    if not found:
+        raise RuntimeError(
+            "No live YouTube streams could be resolved from the webcam page. "
+            "The camera page may have changed or the channels may be offline."
+        )
+    return found[:2]
 
 def record_camera_clip(video_id, output_path):
     page_url = f"https://www.youtube.com/watch?v={video_id}"
