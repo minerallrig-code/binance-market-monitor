@@ -192,9 +192,14 @@ def get_camera_ids():
 def record_camera_clip(video_id, output_path):
     page_url = f"https://www.youtube.com/watch?v={video_id}"
     result = subprocess.run(
-        ["yt-dlp", "--no-warnings", "-f", "best[height<=720]/best", "-g", page_url],
-        check=True, capture_output=True, text=True, timeout=60,
+        ["yt-dlp", "--no-warnings", "--extractor-args", "youtube:player_client=android,web",
+         "-f", "best[height<=720]/best", "-g", page_url],
+        check=False, capture_output=True, text=True, timeout=75,
     )
+    if result.returncode != 0 or not result.stdout.strip():
+        detail = (result.stderr or result.stdout or "No stream URL returned").strip()
+        print("yt-dlp extraction failed:", detail[-3000:])
+        raise RuntimeError(f"Could not extract camera stream {video_id}")
     stream_url = result.stdout.strip().splitlines()[0]
     vf = (
         "scale=1080:1920:force_original_aspect_ratio=increase,"
