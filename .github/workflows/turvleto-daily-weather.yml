@@ -1,0 +1,34 @@
+name: Daily Nha Trang Weather Video
+
+on:
+  workflow_dispatch:
+  schedule:
+    # 08:00 Vietnam time (UTC+7)
+    - cron: "0 1 * * *"
+
+permissions:
+  contents: read
+
+jobs:
+  publish-weather:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+      - name: Install dependencies
+        run: pip install -r projects/turvleto-weather/requirements.txt
+      - name: Generate and publish weather video
+        working-directory: projects/turvleto-weather
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python weather_post.py
