@@ -147,10 +147,20 @@ def send_video(video_path, weather):
             files={"video": ("nha-trang-weather.mp4", video, "video/mp4")},
             timeout=120,
         )
-    response.raise_for_status()
-    result = response.json()
-    if not result.get("ok"):
-        raise RuntimeError(f"Telegram API error: {result}")
+    try:
+        result = response.json()
+    except ValueError:
+        result = {"ok": False, "description": response.text[:500]}
+
+    if response.status_code >= 400 or not result.get("ok"):
+        # Report Telegram's explanation without ever printing the bot token.
+        description = result.get("description", "Unknown Telegram API error")
+        error_code = result.get("error_code", response.status_code)
+        raise RuntimeError(
+            f"Telegram API error {error_code}: {description}. "
+            f"Check that the bot is an administrator of {chat_id} "
+            "and has permission to post messages."
+        )
 
 
 def main():
