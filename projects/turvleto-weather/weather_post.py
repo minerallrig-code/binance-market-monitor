@@ -71,7 +71,6 @@ def load_font(size, bold=False):
 
 
 def make_card(weather, output_png):
-    # Deep teal background with a warm gold glow.
     image = Image.new("RGB", (WIDTH, HEIGHT), (5, 42, 52))
     pixels = image.load()
     for y in range(HEIGHT):
@@ -96,9 +95,8 @@ def make_card(weather, output_png):
     draw.text((110, 220), "ПОГОДА ВО ВЬЕТНАМЕ", font=load_font(34, True), fill=gold)
 
     now = datetime.now(TZ)
-    date_text = now.strftime("%d.%m.%Y")
     draw.text((110, 420), CITY, font=load_font(54, True), fill=gold)
-    draw.text((110, 505), date_text, font=load_font(32), fill=muted)
+    draw.text((110, 505), now.strftime("%d.%m.%Y"), font=load_font(32), fill=muted)
 
     draw.text((90, 650), f'{weather["temp"]}°', font=load_font(300, True), fill=white, stroke_width=2, stroke_fill=(5, 42, 52))
     draw.text((115, 1010), weather_description(weather["code"]), font=load_font(43, True), fill=gold)
@@ -121,7 +119,6 @@ def make_card(weather, output_png):
     image.save(output_png, quality=95)
 
 
-
 CAMERA_PAGE = "https://nhatrang.live/ru/kamery/"
 CAMERA_SECONDS = 4
 
@@ -129,10 +126,6 @@ CAMERA_SECONDS = 4
 def get_camera_ids():
     response = requests.get(CAMERA_PAGE, timeout=25, headers={"User-Agent": "Mozilla/5.0"})
     response.raise_for_status()
-
-    # The webcam page links to YouTube channels; it does not expose /embed/ IDs
-    # in its server-rendered HTML. Resolve each channel's current live stream
-    # through yt-dlp instead of searching only for iframe embed URLs.
     channel_pattern = (
         r"""https?://(?:www\.)?youtube\.com/"""
         r"""(?:@[\w.-]+|channel/[\w-]+|c/[\w.-]+|user/[\w.-]+)"""
@@ -144,7 +137,6 @@ def get_camera_ids():
             channels.append(channel_url)
 
     if not channels:
-        # Page content can be rendered by its CMS with relative/protocol-relative links.
         for handle in re.findall(r"""(?:youtube\.com/)(@[\w.-]+)""", response.text):
             channel_url = "https://www.youtube.com/" + handle
             if channel_url not in channels:
@@ -154,18 +146,14 @@ def get_camera_ids():
     for channel_url in channels:
         try:
             result = subprocess.run(
-                ["yt-dlp", "--flat-playlist", "--dump-single-json",
-                 channel_url + "/streams"],
+                ["yt-dlp", "--flat-playlist", "--dump-single-json", channel_url + "/streams"],
                 check=True, capture_output=True, text=True, timeout=75,
             )
             playlist = json.loads(result.stdout)
             entries = playlist.get("entries") or []
             live_entries = [
                 entry for entry in entries
-                if entry and (
-                    entry.get("is_live") is True
-                    or entry.get("live_status") == "is_live"
-                )
+                if entry and (entry.get("is_live") is True or entry.get("live_status") == "is_live")
             ]
             candidates = live_entries or [
                 entry for entry in entries
@@ -178,16 +166,13 @@ def get_camera_ids():
                     found.append(video_id)
                 if len(found) == 2:
                     return found
-        except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
-                json.JSONDecodeError) as error:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired, json.JSONDecodeError) as error:
             print(f"Could not resolve live stream from {channel_url}: {error}")
 
     if not found:
-        raise RuntimeError(
-            "No live YouTube streams could be resolved from the webcam page. "
-            "The camera page may have changed or the channels may be offline."
-        )
+        raise RuntimeError("No live YouTube streams could be resolved from the Nha Trang webcam page.")
     return found[:2]
+
 
 def record_camera_clip(video_id, output_path):
     page_url = f"https://www.youtube.com/watch?v={video_id}"
@@ -247,42 +232,65 @@ def make_video(png_path, mp4_path):
         )
 
 
-def send_video(video_path, weather):
+def telegram_post(method, data, files=None, timeout=120):
     token = os.environ["TELEGRAM_BOT_TOKEN"]
-    chat_id = os.environ["TELEGRAM_CHAT_ID"]
+    url = f"https://api.telegram.org/bot{token}/{method}"
+    response = requests.post(url, data=data, files=files, timeout=timeout)
+    try:
+        result = response.json()
+    except ValueError:
+        result = {"ok": False, "description": response.text[:500]}
+    if response.status_code >= 400 or not result.get("ok"):
+        raise RuntimeError(
+            f"Telegram API error {result.get('error_code', response.status_code)}: "
+            f"{result.get('description', 'Unknown Telegram API error')}"
+        )
+    return result["result"]
+
+
+def telegram_common():
+    data = {"chat_id": os.environ["TELEGRAM_CHAT_ID"]}
     thread_id = os.environ.get("TELEGRAM_MESSAGE_THREAD_ID")
+    if thread_id:
+        data["message_thread_id"] = thread_id
+    return data
+
+
+def send_video(video_path, weather):
     caption = (
         f'☀️ Погода в Нячанге сегодня: {weather["temp"]}°C, '
         f'{weather_description(weather["code"]).lower()}\n'
         f'Днём до {weather["high"]}°, ночью {weather["low"]}°.\n'
         'ТУР В ЛЕТО — экскурсии и отдых во Вьетнаме'
     )
-    url = f"https://api.telegram.org/bot{token}/sendVideo"
+    data = telegram_common()
+    data["caption"] = caption
     with open(video_path, "rb") as video:
-        response = requests.post(
-            url,
-            data={
-                "chat_id": chat_id,
-                "caption": caption,
-                **({"message_thread_id": thread_id} if thread_id else {}),
-            },
+        result = telegram_post(
+            "sendVideo", data,
             files={"video": ("nha-trang-weather.mp4", video, "video/mp4")},
-            timeout=120,
         )
-    try:
-        result = response.json()
-    except ValueError:
-        result = {"ok": False, "description": response.text[:500]}
+    print("Weather video sent; message_id =", result["message_id"])
 
-    if response.status_code >= 400 or not result.get("ok"):
-        # Report Telegram's explanation without ever printing the bot token.
-        description = result.get("description", "Unknown Telegram API error")
-        error_code = result.get("error_code", response.status_code)
-        raise RuntimeError(
-            f"Telegram API error {error_code}: {description}. "
-            f"Check that the bot is an administrator of {chat_id} "
-            "and has permission to post messages."
-        )
+
+def send_text_weather(weather):
+    now = datetime.now(TZ)
+    rain = "—" if weather["rain"] is None else f'{weather["rain"]}%'
+    message = (
+        f"☀️ ПОГОДА В НЯЧАНГЕ — {now.strftime('%d.%m.%Y')}\n\n"
+        f'{weather_description(weather["code"]).capitalize()}\n'
+        f'🌡 Сейчас: {weather["temp"]}°C, ощущается как {weather["feels"]}°C\n'
+        f'↕️ За день: {weather["low"]}…{weather["high"]}°C\n'
+        f'🌧 Вероятность дождя: {rain}\n'
+        f'💧 Влажность: {weather["humidity"]}%\n'
+        f'💨 Ветер: {weather["wind"]} км/ч\n\n'
+        "Хорошего дня и отличного отдыха!\n"
+        "ТУР В ЛЕТО | turvleto.com"
+    )
+    data = telegram_common()
+    data["text"] = message
+    result = telegram_post("sendMessage", data, timeout=30)
+    print("Weather text sent; message_id =", result["message_id"])
 
 
 def main():
@@ -290,9 +298,13 @@ def main():
     png_path = os.path.abspath("weather.png")
     mp4_path = os.path.abspath("weather.mp4")
     make_card(weather, png_path)
-    make_video(png_path, mp4_path)
-    print(f"Video generated: {mp4_path}")
-    send_video(mp4_path, weather)
+
+    try:
+        make_video(png_path, mp4_path)
+        send_video(mp4_path, weather)
+    except Exception as error:
+        print(f"Video unavailable; publishing text-only weather instead: {type(error).__name__}: {error}")
+        send_text_weather(weather)
 
 
 if __name__ == "__main__":
