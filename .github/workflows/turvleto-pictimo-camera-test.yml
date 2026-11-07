@@ -29,20 +29,20 @@ jobs:
           session.headers.update({"User-Agent": "Mozilla/5.0", "Cache-Control": "no-cache"})
           frames = []
           for i in range(3):
-              response = session.get(image_url, params={"refresh": str(int(time.time()))}, timeout=30)
+              response = session.get(image_url, params={"refresh": str(time.time_ns())}, timeout=30)
               response.raise_for_status()
               image = Image.open(BytesIO(response.content)).convert("RGB")
               path = f"cam_{i:02d}.jpg"
               image.save(path, quality=92)
               frames.append(path)
-              print(f"Snapshot {i+1}: {image.size}, {len(response.content)} bytes")
+              print(f"Snapshot {i+1}: {image.size}, {len(response.content)} bytes, sha256={__import__('hashlib').sha256(response.content).hexdigest()}")
               if i < 2:
                   time.sleep(10)
 
           with open("frames.txt", "w", encoding="utf-8") as f:
               for path in frames:
-                  f.write(f"file '{path}'\\nduration 1.5\\n")
-              f.write(f"file '{frames[-1]}'\\n")
+                  f.write(f"file '{path}'\nduration 1.5\n")
+              f.write(f"file '{frames[-1]}'\n")
 
           subprocess.run([
               "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", "frames.txt",
@@ -54,7 +54,7 @@ jobs:
           token = os.environ["TELEGRAM_BOT_TOKEN"]
           data = {
               "chat_id": os.environ["TELEGRAM_CHAT_ID"],
-              "caption": "Тест камеры Нячанга — реальные обновляемые кадры Pictimo. ТУР В ЛЕТО"
+              "caption": "Тест камеры Нячанга — кадры Pictimo. ТУР В ЛЕТО"
           }
           if os.getenv("TELEGRAM_MESSAGE_THREAD_ID"):
               data["message_thread_id"] = os.environ["TELEGRAM_MESSAGE_THREAD_ID"]
