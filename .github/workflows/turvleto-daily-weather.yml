@@ -29,6 +29,7 @@ jobs:
       - name: Generate and publish weather video
         working-directory: projects/turvleto-weather
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: '@chat100turvietnam'
+          TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
+          TELEGRAM_CHAT_ID: '-1003065943939'
+          TELEGRAM_MESSAGE_THREAD_ID: '114'
         run: python weather_post.py
