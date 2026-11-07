@@ -1,0 +1,67 @@
+name: Turvleto Pictimo Camera Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  camera-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Install tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade requests pillow
+      - name: Capture webcam snapshots and build MP4
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
+          TELEGRAM_CHAT_ID: '-1003065943939'
+          TELEGRAM_MESSAGE_THREAD_ID: '114'
+        run: |
+          python - <<'PY'
+          import os, re, time, subprocess, requests
+          from PIL import Image
+          from io import BytesIO
+
+          page = "https://www.pictimo.com/vietnam/nha-trang/38083/webcam-live-webcam-in-nha-trang"
+          s = requests.Session()
+          s.headers.update({"User-Agent":"Mozilla/5.0"})
+          html = s.get(page, timeout=30).text
+          urls = re.findall(r'https?://images\\.pictimo\\.com/[^"\\']+\\.(?:jpg|jpeg|png)(?:\\?[^"\\']*)?', html, re.I)
+          urls = list(dict.fromkeys(urls))
+          if not urls:
+              urls = ["https://images.pictimo.com/storage/live_thumbs/orig_38083.jpg"]
+          chosen = next((u for u in urls if "38083" in u), urls[0])
+          frames=[]
+          for i in range(3):
+              r=s.get(chosen, timeout=30)
+              r.raise_for_status()
+              im=Image.open(BytesIO(r.content)).convert("RGB")
+              path=f"cam_{i:02d}.jpg"
+              im.save(path, quality=92)
+              frames.append(path)
+              if i < 2: time.sleep(10)
+          with open("frames.txt","w") as f:
+              for p in frames:
+                  f.write(f"file '{p}'\\nduration 1.5\\n")
+              f.write(f"file '{frames[-1]}'\\n")
+          subprocess.run(["ffmpeg","-y","-f","concat","-safe","0","-i","frames.txt","-vf","scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:text='ТУР В ЛЕТО | НЯЧАНГ':fontcolor=white:fontsize=42:x=50:y=70:box=1:boxcolor=0x063f46@0.75:boxborderw=18","-r","25","-c:v","libx264","-pix_fmt","yuv420p","-movflags","+faststart","nha-trang-camera-test.mp4"],check=True)
+          token=os.environ["TELEGRAM_BOT_TOKEN"]
+          data={"chat_id":os.environ["TELEGRAM_CHAT_ID"],"caption":"Тест камеры Нячанга — кадры Pictimo, обновление каждые 10 секунд. ТУР В ЛЕТО"}
+          if os.getenv("TELEGRAM_MESSAGE_THREAD_ID"): data["message_thread_id"]=os.environ["TELEGRAM_MESSAGE_THREAD_ID"]
+          with open("nha-trang-camera-test.mp4","rb") as v:
+              resp=requests.post(f"https://api.telegram.org/bot{token}/sendVideo",data=data,files={"video":("nha-trang-camera-test.mp4",v,"video/mp4")},timeout=120)
+          resp.raise_for_status()
+          result=resp.json()
+          if not result.get("ok"): raise RuntimeError(result)
+          print("Telegram video posted successfully; message_id=",result["result"]["message_id"])
+          PY
+      - name: Save video artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nha-trang-camera-test
+          path: nha-trang-camera-test.mp4
+          if-no-files-found: ignore
+          retention-days: 3
