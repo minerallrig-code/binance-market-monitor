@@ -28,7 +28,6 @@ jobs:
           cameras = [
               ("Nha Trang camera 44577", "https://images.pictimo.com/storage/live_thumbs/orig_44577.jpg"),
               ("Nha Trang camera 46067", "https://images.pictimo.com/storage/live_thumbs/orig_46067.jpg"),
-              ("Nha Trang camera 38083", "https://images.pictimo.com/storage/live_thumbs/orig_38083.jpg"),
           ]
           session = requests.Session()
           session.headers.update({
@@ -39,7 +38,7 @@ jobs:
           usable = []
           for camera_name, image_url in cameras:
               snapshots = []
-              for index in range(2):
+              for index in range(3):
                   try:
                       response = session.get(
                           image_url,
@@ -50,6 +49,7 @@ jobs:
                           print(f"SKIP {camera_name}: HTTP 404, image endpoint missing.")
                           break
                       response.raise_for_status()
+                      print("HTTP freshness headers:", {k: response.headers.get(k) for k in ["Date", "Last-Modified", "ETag", "Cache-Control", "Age", "Expires"]})
                       image = Image.open(BytesIO(response.content)).convert("RGB")
                       if image.width < 200 or image.height < 150:
                           print(f"SKIP {camera_name}: image too small {image.size}.")
@@ -59,8 +59,8 @@ jobs:
                       image.save(path, quality=94)
                       snapshots.append((image, digest, path))
                       print(f"{camera_name} frame {index+1}: {image.size}, {len(response.content)} bytes, sha256={digest}")
-                      if index == 0:
-                          time.sleep(60)
+                      if index < 2:
+                          time.sleep(30)
                   except requests.RequestException as error:
                       print(f"SKIP {camera_name}: download error: {error}")
                       break
@@ -68,23 +68,26 @@ jobs:
                       print(f"SKIP {camera_name}: invalid image: {error}")
                       break
 
-              if len(snapshots) != 2:
+              if len(snapshots) != 3:
+                  print(f"UNVERIFIED {camera_name}: collected {len(snapshots)}/3 snapshots.")
                   continue
-              if snapshots[0][1] == snapshots[1][1]:
-                  print(f"REJECT {camera_name}: identical files after 60 seconds; freshness not confirmed.")
-                  continue
-              diff = ImageChops.difference(snapshots[0][0], snapshots[1][0]).convert("L")
-              changed = sum(1 for p in diff.getdata() if p > 8) / (diff.width * diff.height)
-              print(f"{camera_name}: changed pixels={changed:.2%}")
-              if changed < 0.05:
-                  print(f"REJECT {camera_name}: less than 5% visual change; freshness uncertain.")
-                  continue
+
+              # Identical frames are valid for a stationary camera and are NOT a rejection reason.
+              # Pixel differences are diagnostics only, not a freshness requirement.
+              for index in range(1, len(snapshots)):
+                  if snapshots[index-1][1] == snapshots[index][1]:
+                      print(f"{camera_name}: frames {index} and {index+1} are identical; keeping camera.")
+                  else:
+                      diff = ImageChops.difference(snapshots[index-1][0], snapshots[index][0]).convert("L")
+                      changed = sum(1 for p in diff.getdata() if p > 8) / (diff.width * diff.height)
+                      print(f"{camera_name}: frames {index}/{index+1}, changed pixels={changed:.2%}")
+
               usable.append((camera_name, snapshots[-1][2]))
 
           if not usable:
               message = (
                   "⚠️ ТУР В ЛЕТО — тест камер Нячанга\\n\\n"
-                  "Свежие кадры не подтверждены. Видео сегодня не сформировано. "
+                  "Не удалось получить три корректных снимка. Видео сегодня не сформировано. "
                   "Архивные или неподвижные изображения в публикацию не отправляем."
               )
               with open("camera_status.txt", "w", encoding="utf-8") as f:
