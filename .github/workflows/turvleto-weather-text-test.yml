@@ -13,12 +13,14 @@ jobs:
       - name: Publish weather update to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
-          TELEGRAM_CHAT_ID: '@chat100turvietnam'
+          TELEGRAM_CHAT_ID: '-1003065943939'
+          TELEGRAM_MESSAGE_THREAD_ID: '114'
         run: |
           python - <<'PY'
-          import json, os, urllib.request
+          import json, os, urllib.request, urllib.error
           token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
           chat_id = os.environ["TELEGRAM_CHAT_ID"]
+          thread_id = int(os.environ["TELEGRAM_MESSAGE_THREAD_ID"])
           if not token:
               raise SystemExit("Repository secret NEWS_BOT is empty or unavailable")
           text = """🌦 ПОГОДА В НЯЧАНГЕ
@@ -31,14 +33,18 @@ jobs:
           🌴 Совет туристам: возьмите с собой лёгкий дождевик и следите за погодой перед морскими экскурсиями.
 
           ТУР В ЛЕТО | Ваш гид по Вьетнаму"""
-          data = json.dumps({"chat_id": chat_id, "text": text}).encode()
+          payload = {"chat_id": chat_id, "message_thread_id": thread_id, "text": text}
           req = urllib.request.Request(
               f"https://api.telegram.org/bot{token}/sendMessage",
-              data=data,
+              data=json.dumps(payload).encode(),
               headers={"Content-Type": "application/json"},
           )
-          with urllib.request.urlopen(req, timeout=30) as response:
-              result = json.loads(response.read())
+          try:
+              with urllib.request.urlopen(req, timeout=30) as response:
+                  result = json.loads(response.read())
+          except urllib.error.HTTPError as e:
+              print("Telegram API error:", e.read().decode("utf-8", "replace"))
+              raise
           if not result.get("ok"):
               raise SystemExit("Telegram API rejected the message")
           print("Weather text successfully published.")
