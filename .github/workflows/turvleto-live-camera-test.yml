@@ -1,0 +1,145 @@
+name: Turvleto Live Camera Stream Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-streams:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install FFmpeg and Python
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+          python -m pip install --upgrade requests
+      - name: Install latest yt-dlp
+        run: |
+          python -m pip install --upgrade --pre yt-dlp
+      - name: Test public Nha Trang live streams
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
+          TELEGRAM_CHAT_ID: '-1003065943939'
+          TELEGRAM_MESSAGE_THREAD_ID: '114'
+        run: |
+          python - <<'PY'
+          import os, subprocess, requests, json, time
+          from pathlib import Path
+
+          candidates = [
+              ("HON_CHONG", "https://www.youtube.com/@NhaTrang_rent/streams", "Hòn Chồng — пляж"),
+              ("CITY", "https://www.youtube.com/@VietVed/streams", "Нячанг — город"),
+          ]
+          report = []
+          clips = []
+
+          def run(cmd, timeout=90):
+              return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+
+          for key, channel, label in candidates:
+              report.append(f"\n{label}: {channel}")
+              try:
+                  listing = run([
+                      "yt-dlp", "--no-warnings", "--flat-playlist",
+                      "--dump-single-json", "--extractor-args",
+                      "youtube:player_client=android,tv_embedded,web_embedded",
+                      channel
+                  ], 75)
+                  if listing.returncode != 0:
+                      report.append("Список эфиров недоступен: " + (listing.stderr or listing.stdout)[-1800:])
+                      continue
+                  data = json.loads(listing.stdout)
+                  entries = data.get("entries") or []
+                  entries.sort(key=lambda x: (x.get("live_status") == "is_live", bool(x.get("is_live"))), reverse=True)
+                  live = [e for e in entries if e.get("id") and (e.get("is_live") or e.get("live_status") == "is_live")]
+                  if not live:
+                      live = [e for e in entries if e.get("id") and e.get("live_status") not in ("was_live", "not_live")]
+                  if not live:
+                      report.append("Активный эфир в списке не найден.")
+                      continue
+                  video_id = live[0]["id"]
+                  report.append(f"Найден кандидат: https://youtu.be/{video_id}; статус={live[0].get('live_status')}")
+                  page = f"https://www.youtube.com/watch?v={video_id}"
+                  extracted = run([
+                      "yt-dlp", "--no-warnings", "--extractor-args",
+                      "youtube:player_client=android,tv_embedded,web_embedded",
+                      "-f", "best[height<=720]/best", "-g", page
+                  ], 75)
+                  if extracted.returncode != 0 or not extracted.stdout.strip():
+                      report.append("Получить публичный URL потока не удалось: " + (extracted.stderr or extracted.stdout)[-1800:])
+                      continue
+                  stream_url = extracted.stdout.strip().splitlines()[0]
+                  out = f"{key.lower()}_sample.mp4"
+                  capture = run([
+                      "ffmpeg", "-y", "-loglevel", "error", "-i", stream_url,
+                      "-t", "4", "-vf",
+                      "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,setsar=1",
+                      "-an", "-r", "25", "-c:v", "libx264", "-preset", "veryfast",
+                      "-crf", "25", "-pix_fmt", "yuv420p", out
+                  ], 90)
+                  if capture.returncode:
+                      report.append("Поток найден, но 4-секундный фрагмент не записался: " + capture.stderr[-1200:])
+                      continue
+                  clips.append((label, out))
+                  report.append(f"УСПЕХ: записан тестовый фрагмент {out}.")
+              except Exception as exc:
+                  report.append(f"Ошибка проверки: {type(exc).__name__}: {exc}")
+
+          if clips:
+              concat = Path("concat.txt")
+              concat.write_text("".join(f"file '{p}'\n" for _, p in clips), encoding="utf-8")
+              result = run([
+                  "ffmpeg", "-y", "-loglevel", "error", "-f", "concat", "-safe", "0",
+                  "-i", str(concat), "-c", "copy", "-movflags", "+faststart",
+                  "turvleto-live-camera-test.mp4"
+              ], 90)
+              if result.returncode:
+                  report.append("Не удалось объединить тестовые фрагменты: " + result.stderr[-1000:])
+              else:
+                  token = os.environ["TELEGRAM_BOT_TOKEN"]
+                  data = {"chat_id": os.environ["TELEGRAM_CHAT_ID"],
+                          "caption": "ТЕСТ публичных live-камер Нячанга — ТУР В ЛЕТО"}
+                  if os.getenv("TELEGRAM_MESSAGE_THREAD_ID"):
+                      data["message_thread_id"] = os.environ["TELEGRAM_MESSAGE_THREAD_ID"]
+                  with open("turvleto-live-camera-test.mp4", "rb") as f:
+                      sent = requests.post(
+                          f"https://api.telegram.org/bot{token}/sendVideo",
+                          data=data, files={"video": ("turvleto-live-camera-test.mp4", f, "video/mp4")},
+                          timeout=120
+                      )
+                  sent.raise_for_status()
+                  payload = sent.json()
+                  if not payload.get("ok"):
+                      raise RuntimeError(payload.get("description", "Telegram sendVideo failed"))
+                  report.append(f"Тестовое видео отправлено в Telegram, message_id={payload['result']['message_id']}.")
+          else:
+              report.append("\nИТОГ: получить пригодный видеопоток без авторизации не удалось. Ежедневный пост не изменён.")
+
+          text = "\n".join(report)
+          Path("camera-test-report.txt").write_text(text, encoding="utf-8")
+          print(text)
+          token = os.environ["TELEGRAM_BOT_TOKEN"]
+          message = {"chat_id": os.environ["TELEGRAM_CHAT_ID"], "text": "📹 ТУР В ЛЕТО — проверка live-камер\n\n" + text[:3500]}
+          if os.getenv("TELEGRAM_MESSAGE_THREAD_ID"):
+              message["message_thread_id"] = os.environ["TELEGRAM_MESSAGE_THREAD_ID"]
+          response = requests.post(f"https://api.telegram.org/bot{token}/sendMessage", json=message, timeout=30)
+          response.raise_for_status()
+          if not response.json().get("ok"):
+              raise RuntimeError(response.text[:1000])
+          PY
+      - name: Save camera test report and samples
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: turvleto-live-camera-test
+          path: |
+            camera-test-report.txt
+            *_sample.mp4
+            turvleto-live-camera-test.mp4
+          if-no-files-found: ignore
+          retention-days: 3
