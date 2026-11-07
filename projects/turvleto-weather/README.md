@@ -4,15 +4,14 @@
 
 Планируемая реализация: GitHub Actions, запуск ежедневно в 08:00 по времени Вьетнама (01:00 UTC), получение прогноза через Open-Meteo, генерация вертикального видео 9:16 и отправка через Telegram Bot API.
 
-Секреты GitHub Actions: `TELEGRAM_BOT_TOKEN` и `TELEGRAM_CHAT_ID` (значение канала: `@chat100turvietnam`).
+Секрет GitHub Actions: `TELEGRAM_BOT_TOKEN`. Канал уже указан в workflow: `@chat100turvietnam`.
 
 
 ## Настройка публикации
 
 1. В GitHub открой **Settings → Secrets and variables → Actions** этого репозитория.
-2. Создай секреты:
+2. Создай секрет:
    - `TELEGRAM_BOT_TOKEN` — токен бота из BotFather (не публикуй его в коде).
-   - `TELEGRAM_CHAT_ID` — `@chat100turvietnam`.
 3. Убедись, что бот `@Mirtour_bot` — администратор канала и ему разрешена публикация сообщений.
 4. Открой **Actions → Daily Nha Trang Weather Video → Run workflow** для первого ручного запуска.
 
