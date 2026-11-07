@@ -1,0 +1,45 @@
+name: Turvleto Weather Text Test
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-weather-text:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish weather update to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
+          TELEGRAM_CHAT_ID: '@chat100turvietnam'
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+          chat_id = os.environ["TELEGRAM_CHAT_ID"]
+          if not token:
+              raise SystemExit("Repository secret NEWS_BOT is empty or unavailable")
+          text = """🌦 ПОГОДА В НЯЧАНГЕ
+          📅 7 ноября
+
+          Сейчас около +28…+30°C, преимущественно облачно.
+          Днём возможен небольшой дождь, вечером вероятность осадков повышается.
+          Ночью около +23…+24°C.
+
+          🌴 Совет туристам: возьмите с собой лёгкий дождевик и следите за погодой перед морскими экскурсиями.
+
+          ТУР В ЛЕТО | Ваш гид по Вьетнаму"""
+          data = json.dumps({"chat_id": chat_id, "text": text}).encode()
+          req = urllib.request.Request(
+              f"https://api.telegram.org/bot{token}/sendMessage",
+              data=data,
+              headers={"Content-Type": "application/json"},
+          )
+          with urllib.request.urlopen(req, timeout=30) as response:
+              result = json.loads(response.read())
+          if not result.get("ok"):
+              raise SystemExit("Telegram API rejected the message")
+          print("Weather text successfully published.")
+          PY
