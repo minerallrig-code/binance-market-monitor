@@ -11,9 +11,10 @@ jobs:
       - name: Install tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ffmpeg tesseract-ocr
+          sudo apt-get install -y ffmpeg
           python -m pip install --upgrade requests pillow
-      - name: Capture and validate snapshots, build test video, publish to Telegram
+      - name: Capture snapshots and validate freshness
+        id: capture
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
           TELEGRAM_CHAT_ID: '-1003065943939'
@@ -24,10 +25,10 @@ jobs:
           from PIL import Image, ImageChops
           from io import BytesIO
 
-          # Candidate cameras advertised as refreshing their snapshots every 10 seconds.
           cameras = [
               ("Nha Trang camera 44577", "https://images.pictimo.com/storage/live_thumbs/orig_44577.jpg"),
               ("Nha Trang camera 46067", "https://images.pictimo.com/storage/live_thumbs/orig_46067.jpg"),
+              ("Nha Trang camera 38083", "https://images.pictimo.com/storage/live_thumbs/orig_38083.jpg"),
           ]
           session = requests.Session()
           session.headers.update({
@@ -35,50 +36,67 @@ jobs:
               "Cache-Control": "no-cache, no-store",
               "Pragma": "no-cache",
           })
-          frames = []
-          hashes = {}
+          usable = []
           for camera_name, image_url in cameras:
-              camera_frames = []
+              snapshots = []
               for index in range(2):
-                  response = session.get(
-                      image_url,
-                      params={"_": str(time.time_ns())},
-                      headers={"Cache-Control": "no-cache"},
-                      timeout=30,
-                  )
-                  response.raise_for_status()
-                  image = Image.open(BytesIO(response.content)).convert("RGB")
-                  if image.width < 200 or image.height < 150:
-                      raise RuntimeError(f"{camera_name}: image too small: {image.size}")
-                  digest = hashlib.sha256(response.content).hexdigest()
-                  print(f"{camera_name} frame {index+1}: size={image.size}, bytes={len(response.content)}, sha256={digest}")
-                  path = f"camera_{len(frames):02d}.jpg"
-                  image.save(path, quality=94)
-                  frames.append(path)
-                  camera_frames.append(image.copy())
-                  hashes.setdefault(camera_name, []).append(digest)
-                  if index == 0:
-                      time.sleep(12)
+                  try:
+                      response = session.get(
+                          image_url,
+                          params={"_": str(time.time_ns())},
+                          timeout=30,
+                      )
+                      if response.status_code == 404:
+                          print(f"SKIP {camera_name}: HTTP 404, image endpoint missing.")
+                          break
+                      response.raise_for_status()
+                      image = Image.open(BytesIO(response.content)).convert("RGB")
+                      if image.width < 200 or image.height < 150:
+                          print(f"SKIP {camera_name}: image too small {image.size}.")
+                          break
+                      digest = hashlib.sha256(response.content).hexdigest()
+                      path = f"{camera_name.split()[-1]}_{index+1}.jpg"
+                      image.save(path, quality=94)
+                      snapshots.append((image, digest, path))
+                      print(f"{camera_name} frame {index+1}: {image.size}, {len(response.content)} bytes, sha256={digest}")
+                      if index == 0:
+                          time.sleep(60)
+                  except requests.RequestException as error:
+                      print(f"SKIP {camera_name}: download error: {error}")
+                      break
+                  except Exception as error:
+                      print(f"SKIP {camera_name}: invalid image: {error}")
+                      break
 
-              # Identical hashes mean the endpoint did not refresh during the test.
-              if hashes[camera_name][0] == hashes[camera_name][1]:
-                  print(f"WARNING: {camera_name}: identical snapshots; camera freshness NOT confirmed.")
-              else:
-                  diff = ImageChops.difference(camera_frames[0], camera_frames[1]).convert("L")
-                  changed_fraction = sum(1 for p in diff.getdata() if p > 8) / (diff.width * diff.height)
-                  print(f"{camera_name}: changed pixels={changed_fraction:.2%}")
-                  if changed_fraction < 0.05:
-                      print(f"WARNING: {camera_name}: very little visual change; freshness uncertain.")
+              if len(snapshots) != 2:
+                  continue
+              if snapshots[0][1] == snapshots[1][1]:
+                  print(f"REJECT {camera_name}: identical files after 60 seconds; freshness not confirmed.")
+                  continue
+              diff = ImageChops.difference(snapshots[0][0], snapshots[1][0]).convert("L")
+              changed = sum(1 for p in diff.getdata() if p > 8) / (diff.width * diff.height)
+              print(f"{camera_name}: changed pixels={changed:.2%}")
+              if changed < 0.05:
+                  print(f"REJECT {camera_name}: less than 5% visual change; freshness uncertain.")
+                  continue
+              usable.append((camera_name, snapshots[-1][2]))
 
-          # Make a short vertical montage. Every frame is held briefly with a gentle zoom.
-          concat_path = "frames.txt"
-          with open(concat_path, "w", encoding="utf-8") as f:
-              for frame in frames:
-                  f.write(f"file '{frame}'\n")
-                  f.write("duration 1.5\n")
-              f.write(f"file '{frames[-1]}'\n")
+          if not usable:
+              print("No camera passed freshness checks. No video will be sent to Telegram.")
+              with open("camera_status.txt", "w", encoding="utf-8") as f:
+                  f.write("No camera passed freshness checks.\n")
+              raise SystemExit(0)
+
+          # Create a vertical slideshow only from cameras whose snapshots changed.
+          manifest = "frames.txt"
+          with open(manifest, "w", encoding="utf-8") as f:
+              for name, path in usable:
+                  f.write(f"file '{path}'\n")
+                  f.write("duration 2.5\n")
+              f.write(f"file '{usable[-1][1]}'\n")
+
           subprocess.run([
-              "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", concat_path,
+              "ffmpeg", "-y", "-f", "concat", "-safe", "0", "-i", manifest,
               "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920,"
                      "zoompan=z='min(zoom+0.0004,1.04)':d=1:s=1080x1920:fps=25,"
                      "drawtext=fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf:"
@@ -91,7 +109,7 @@ jobs:
           token = os.environ["TELEGRAM_BOT_TOKEN"]
           data = {
               "chat_id": os.environ["TELEGRAM_CHAT_ID"],
-              "caption": "Тест видеоряда из нескольких камер Нячанга. Проверяем свежесть кадров. ТУР В ЛЕТО"
+              "caption": "Тест видеоряда из свежих кадров камер Нячанга. ТУР В ЛЕТО"
           }
           if os.getenv("TELEGRAM_MESSAGE_THREAD_ID"):
               data["message_thread_id"] = os.environ["TELEGRAM_MESSAGE_THREAD_ID"]
@@ -107,13 +125,15 @@ jobs:
               raise RuntimeError(f"Telegram sendVideo failed: {result.get('description', response.status_code)}")
           print("Telegram test video posted; message_id =", result["result"]["message_id"])
           PY
-      - name: Save test video
+      - name: Save diagnostic files
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: turvleto-multi-camera-test
+          name: turvleto-multi-camera-diagnostic
           path: |
             nha-trang-multi-camera-test.mp4
-            camera_*.jpg
+            camera_status.txt
+            *_1.jpg
+            *_2.jpg
           if-no-files-found: ignore
           retention-days: 3
