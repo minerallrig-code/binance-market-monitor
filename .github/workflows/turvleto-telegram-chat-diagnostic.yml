@@ -1,0 +1,53 @@
+name: Turvleto Telegram Chat Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-chat:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read bot updates and identify Tur_v_leto chat and topic
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
+        run: |
+          python - <<'PY'
+          import json, os, urllib.request, urllib.error
+          token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
+          if not token:
+              raise SystemExit("Repository secret NEWS_BOT is empty or unavailable")
+          base = f"https://api.telegram.org/bot{token}"
+          def call(method):
+              req = urllib.request.Request(base + "/" + method)
+              try:
+                  with urllib.request.urlopen(req, timeout=20) as response:
+                      return json.loads(response.read())
+              except urllib.error.HTTPError as e:
+                  body = e.read().decode("utf-8", "replace")
+                  raise SystemExit(f"Telegram {method} failed: HTTP {e.code}: {body}")
+          webhook = call("getWebhookInfo")
+          info = webhook.get("result", {})
+          print("Webhook configured:", bool(info.get("url")))
+          if info.get("url"):
+              print("getUpdates unavailable while webhook is configured.")
+              print("Webhook pending updates:", info.get("pending_update_count"))
+              raise SystemExit(0)
+          updates = call("getUpdates")
+          for update in updates.get("result", []):
+              msg = update.get("message") or update.get("edited_message")
+              if not msg:
+                  continue
+              chat = msg.get("chat", {})
+              if chat.get("type") in ("group", "supergroup"):
+                  print("GROUP:", json.dumps({
+                      "chat_id": chat.get("id"),
+                      "title": chat.get("title"),
+                      "type": chat.get("type"),
+                      "message_thread_id": msg.get("message_thread_id"),
+                      "text": msg.get("text", "")[:80]
+                  }, ensure_ascii=False))
+          print("Diagnostic complete.")
+          PY
