@@ -1,9 +1,9 @@
-name: Daily Turvleto Weather Text
+name: Turvleto Weather Text
 
 on:
   workflow_dispatch:
   schedule:
-    # 08:00 Vietnam time (UTC+7)
+    # GitHub checks daily at 08:00 Vietnam time; the guard publishes every 3 days.
     - cron: "0 1 * * *"
 
 permissions:
@@ -16,13 +16,28 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Check three-day publishing cycle
+        id: cadence
+        if: github.event_name == 'schedule'
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          from datetime import date
+          anchor = date(2026, 11, 11)
+          today = date.today()
+          days = (today - anchor).days
+          print("publish=" + ("true" if days >= 0 and days % 3 == 0 else "false"))
+          PY
       - name: Set up Python
+        if: github.event_name == 'workflow_dispatch' || steps.cadence.outputs.publish == 'true'
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Install dependencies
+        if: github.event_name == 'workflow_dispatch' || steps.cadence.outputs.publish == 'true'
         run: pip install -r projects/turvleto-weather/requirements.txt
-      - name: Publish daily weather for four destinations
+      - name: Publish weather for four destinations
+        if: github.event_name == 'workflow_dispatch' || steps.cadence.outputs.publish == 'true'
         working-directory: projects/turvleto-weather
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
