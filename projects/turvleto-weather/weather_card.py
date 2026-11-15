@@ -106,9 +106,10 @@ def render_card(weather_list, path="weather_card.png", day=None, title="ПОГО
     f_title = _font(BOLD_NAMES, 62)
     f_date = _font(REG_NAMES, 34)
     f_city = _font(BOLD_NAMES, 44)
-    f_temp = _font(BOLD_NAMES, 76)
+    f_temp = _font(BOLD_NAMES, 66)
     f_body = _font(REG_NAMES, 30)
     f_detail = _font(REG_NAMES, 25)
+    f_feels = _font(REG_NAMES, 24)
     f_foot = _font(BOLD_NAMES, 34)
     f_site = _font(REG_NAMES, 28)
     f_tag = _font(REG_NAMES, 22)
@@ -135,16 +136,16 @@ def render_card(weather_list, path="weather_card.png", day=None, title="ПОГО
         tx = 200
         d.text((tx, y0 + 26), str(c["name"]).upper(), font=f_city, fill=INK)
         d.text((tx, y0 + 86), _plain(c["condition"]), font=f_body, fill=MUTED)
-        d.text((tx, y0 + 130),
+        d.text((tx, y0 + 134),
                f"Днём +{c['high']}° · ночью +{c['low']}° · дождь {_rain_text(c['rain'])}",
                font=f_detail, fill=MUTED)
 
         temp = f"+{c['temp']}°"
-        d.text((W - 100 - d.textlength(temp, font=f_temp), y0 + 30), temp,
+        d.text((W - 100 - d.textlength(temp, font=f_temp), y0 + 24), temp,
                font=f_temp, fill=ACCENT)
         feels = f"ощущается как +{c['feels']}°"
-        d.text((W - 100 - d.textlength(feels, font=f_detail), y0 + 126), feels,
-               font=f_detail, fill=MUTED)
+        d.text((W - 100 - d.textlength(feels, font=f_feels), y0 + 106), feels,
+               font=f_feels, fill=MUTED)
 
     d.line([(60, fy), (W - 60, fy)], fill=CARD_EDGE, width=2)
     d.text((60, fy + 32), "ТУР В ЛЕТО | Экскурсии и отдых во Вьетнаме", font=f_foot, fill=INK)
