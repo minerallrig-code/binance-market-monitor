@@ -3,31 +3,53 @@ name: Turvleto Weather Text
 on:
   workflow_dispatch:
   schedule:
-    # GitHub checks daily at 08:00 Vietnam time; the guard publishes every 3 days.
+    # GitHub triggers this around 08:00 Vietnam time (01:00 UTC);
+    # the cadence step decides whether a post is published today.
     - cron: "0 1 * * *"
 
 permissions:
   contents: read
 
+env:
+  # Publishing cadence: first published day and interval in days.
+  TURVLETO_ANCHOR_DATE: "2026-11-11"
+  TURVLETO_CYCLE_DAYS: "3"
+
 jobs:
   publish-weather:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Check three-day publishing cycle
+      - name: Check publishing cycle
         id: cadence
         if: github.event_name == 'schedule'
         shell: bash
         run: |
           python - <<'PY' >> "$GITHUB_OUTPUT"
-          from datetime import date
-          anchor = date(2026, 11, 11)
-          today = date.today()
+          import os
+          from datetime import date, datetime
+          from zoneinfo import ZoneInfo
+
+          anchor = date.fromisoformat(os.environ["TURVLETO_ANCHOR_DATE"])
+          cycle = int(os.environ["TURVLETO_CYCLE_DAYS"])
+          today = datetime.now(ZoneInfo("Asia/Ho_Chi_Minh")).date()
           days = (today - anchor).days
-          print("publish=" + ("true" if days >= 0 and days % 3 == 0 else "false"))
+          publish = days >= 0 and days % cycle == 0
+          print("publish=" + ("true" if publish else "false"))
+          print("decision_date=" + today.isoformat())
+          print("days_since_anchor=" + str(days))
           PY
+      - name: Report publishing decision
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "publish=true reason=manual dispatch"
+          else
+            echo "publish=${{ steps.cadence.outputs.publish }} date=${{ steps.cadence.outputs.decision_date }} days_since_anchor=${{ steps.cadence.outputs.days_since_anchor }}"
+          fi
       - name: Set up Python
         if: github.event_name == 'workflow_dispatch' || steps.cadence.outputs.publish == 'true'
         uses: actions/setup-python@v5
@@ -36,7 +58,7 @@ jobs:
       - name: Install dependencies
         if: github.event_name == 'workflow_dispatch' || steps.cadence.outputs.publish == 'true'
         run: pip install -r projects/turvleto-weather/requirements.txt
-      - name: Publish weather for four destinations
+      - name: Publish weather for five destinations
         if: github.event_name == 'workflow_dispatch' || steps.cadence.outputs.publish == 'true'
         working-directory: projects/turvleto-weather
         env:
@@ -44,3 +66,11 @@ jobs:
           TELEGRAM_CHAT_ID: '-1003065943939'
           TELEGRAM_MESSAGE_THREAD_ID: '114'
         run: python weather_post.py
+      - name: Keep the rendered card for review
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: turvleto-weather-card
+          path: projects/turvleto-weather/weather_card.png
+          if-no-files-found: ignore
+          retention-days: 3
