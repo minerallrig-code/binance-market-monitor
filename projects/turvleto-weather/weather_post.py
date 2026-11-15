@@ -20,6 +20,9 @@ RETRY_DELAYS = (2, 4, 8)
 ATTEMPTS = 3
 CARD_PATH = "weather_card.png"
 CAPTION_LIMIT = 1024
+# The post is the card alone: no caption is attached. Put text here to bring a
+# caption back (1024 characters max) — e.g. hashtags, which only work in text.
+PHOTO_CAPTION = ""
 
 
 def weather_description(code):
@@ -198,14 +201,22 @@ def telegram_call(method, data, files=None, attempts=ATTEMPTS):
 
 
 def send_post(message, image_path=None):
-    """Photo post when a card exists and fits the caption limit, text post otherwise."""
+    """Publish exactly one message: the card, without a caption.
+
+    The card carries all the numbers, the brand and the site, so a text post would
+    duplicate it. The text is only a fallback for the case where Telegram refuses
+    the photo.
+    """
     chat_id = os.environ["TELEGRAM_CHAT_ID"]
     thread_id = os.environ.get("TELEGRAM_MESSAGE_THREAD_ID")
 
-    if image_path and len(message) <= CAPTION_LIMIT:
-        data = {"chat_id": chat_id, "caption": message}
+    if image_path:
+        data = {"chat_id": chat_id}
         if thread_id:
             data["message_thread_id"] = thread_id
+        caption = PHOTO_CAPTION.strip()
+        if caption:
+            data["caption"] = caption[:CAPTION_LIMIT]
         try:
             with open(image_path, "rb") as photo:
                 result = telegram_call(
@@ -216,8 +227,6 @@ def send_post(message, image_path=None):
             return
         except Exception as error:  # noqa: BLE001 - fall back, keep the post alive
             print(f"Photo post failed ({error}); falling back to text post", flush=True)
-    elif image_path:
-        print(f"Message is {len(message)} chars, above the {CAPTION_LIMIT} caption limit; posting as text")
 
     data = {"chat_id": chat_id, "text": message}
     if thread_id:
