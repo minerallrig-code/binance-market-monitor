@@ -1,5 +1,8 @@
+import base64
+import json
 import os
 import sys
+from pathlib import Path
 from urllib.parse import urlparse
 
 import requests
@@ -27,12 +30,14 @@ def telegram(method, data, files=None):
         f"{API_BASE}/bot{token}/{method}",
         data=data,
         files=files,
-        timeout=60,
+        timeout=90,
     )
     response.raise_for_status()
     payload = response.json()
     if not payload.get("ok"):
-        raise RuntimeError(f"Telegram {method} failed: {payload.get('description', 'unknown error')}")
+        raise RuntimeError(
+            f"Telegram {method} failed: {payload.get('description', 'unknown error')}"
+        )
     return payload["result"]
 
 
@@ -59,29 +64,72 @@ def split_text(text, limit=MESSAGE_LIMIT):
     return parts
 
 
-def main():
-    text = os.environ.get("NEWS_TEXT", "").strip()
-    image_url = require_https_url(os.environ.get("NEWS_IMAGE_URL"), "NEWS_IMAGE_URL")
-    source_url = require_https_url(os.environ.get("NEWS_SOURCE_URL"), "NEWS_SOURCE_URL")
-
+def publish(text, image_url=None, image_base64=None, source_url=None):
+    text = (text or "").strip()
     if not text:
-        raise ValueError("NEWS_TEXT is required")
+        raise ValueError("news text is required")
+
+    source_url = require_https_url(source_url, "source_url")
+    image_url = require_https_url(image_url, "image_url")
     if source_url and source_url not in text:
         text = f"{text}\n\nИсточник: {source_url}"
 
-    if image_url:
+    if image_base64:
+        image_bytes = base64.b64decode(image_base64, validate=True)
+        if not image_bytes:
+            raise ValueError("image_base64 decoded to an empty file")
+        caption = text[:CAPTION_LIMIT]
+        telegram(
+            "sendPhoto",
+            {**base_data(), "caption": caption},
+            files={"photo": ("turvleto-news.jpg", image_bytes, "image/jpeg")},
+        )
+        print("Telegram confirmed photo + caption.")
+        remainder = text[CAPTION_LIMIT:].strip()
+    elif image_url:
         caption = text[:CAPTION_LIMIT]
         telegram("sendPhoto", {**base_data(), "photo": image_url, "caption": caption})
-        print("News image and caption sent.")
+        print("Telegram confirmed photo + caption.")
         remainder = text[CAPTION_LIMIT:].strip()
-        if remainder:
-            for part in split_text(remainder):
-                telegram("sendMessage", {**base_data(), "text": part})
-            print("News continuation sent.")
     else:
-        for part in split_text(text):
+        remainder = text
+        print("No image supplied; text-only publication.")
+
+    if remainder:
+        for part in split_text(remainder):
             telegram("sendMessage", {**base_data(), "text": part})
-        print("News text sent.")
+        print("Telegram confirmed text continuation.")
+
+
+def load_approved_items():
+    event_path = os.environ.get("GITHUB_EVENT_PATH")
+    if not event_path:
+        raise ValueError("GITHUB_EVENT_PATH is missing")
+    event = json.loads(Path(event_path).read_text(encoding="utf-8"))
+    paths = []
+    for commit in event.get("commits", []):
+        paths.extend(commit.get("added", []))
+        paths.extend(commit.get("modified", []))
+    approved = [
+        path for path in dict.fromkeys(paths)
+        if path.startswith("projects/turvleto-news/approved/")
+        and path.endswith(".json")
+    ]
+    if not approved:
+        raise ValueError("No newly approved Turvleto news JSON found in this push")
+    return approved
+
+
+def main():
+    for relative_path in load_approved_items():
+        item = json.loads(Path(relative_path).read_text(encoding="utf-8"))
+        print(f"Publishing approved item: {relative_path}")
+        publish(
+            text=item.get("text", ""),
+            image_url=item.get("image_url"),
+            image_base64=item.get("image_base64"),
+            source_url=item.get("source_url"),
+        )
 
 
 if __name__ == "__main__":
