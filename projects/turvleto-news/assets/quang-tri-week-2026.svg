@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1312" viewBox="0 0 1200 1312">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#74c8e8"/><stop offset=".55" stop-color="#f8d4a2"/><stop offset="1" stop-color="#f08b4c"/></linearGradient>
+ <linearGradient id="sea" x2="0" y2="1"><stop stop-color="#198e9b"/><stop offset="1" stop-color="#07546a"/></linearGradient>
+ <linearGradient id="gold" x2="1" y2="1"><stop stop-color="#ffd66b"/><stop offset="1" stop-color="#ed8a36"/></linearGradient>
+ <linearGradient id="balloon" x2="1" y2="1"><stop stop-color="#f7df47"/><stop offset=".35" stop-color="#ef5a42"/><stop offset=".68" stop-color="#3db5a4"/><stop offset="1" stop-color="#574b9b"/></linearGradient>
+ <filter id="shadow"><feGaussianBlur stdDeviation="9"/></filter>
+</defs>
+<rect width="1200" height="1312" fill="url(#sky)"/>
+<circle cx="1010" cy="205" r="100" fill="#fff0bc" opacity=".7"/>
+<path d="M0 570 Q130 350 280 490 T560 465 T850 475 T1200 390 V850 H0Z" fill="#2c786b"/>
+<path d="M0 630 Q160 440 320 560 T640 515 T930 545 T1200 470 V900 H0Z" fill="#1b6159"/>
+<path d="M0 690 Q180 575 360 665 T730 620 T1050 630 T1200 580 V930 H0Z" fill="#124e52"/>
+<path d="M0 740 Q250 690 440 750 T850 730 T1200 690 V1312 H0Z" fill="url(#sea)"/>
+<path d="M0 830 Q220 780 430 840 T850 820 T1200 800" fill="none" stroke="#9de0d0" stroke-width="8" opacity=".5"/>
+<path d="M0 930 Q300 875 540 940 T1000 920 T1200 900" fill="none" stroke="#c3eadc" stroke-width="5" opacity=".35"/>
+<!-- distant hot air balloons -->
+<g opacity=".9">
+ <path d="M250 95 C170 160 190 275 250 305 C310 275 330 160 250 95Z" fill="#e9a33b" stroke="#fff2c8" stroke-width="7"/>
+ <path d="M250 98 Q250 215 250 302 M205 145 Q250 220 295 145" fill="none" stroke="#fff2c8" stroke-width="5"/>
+ <path d="M235 307 L265 307 L260 338 L240 338Z" fill="#5b4332"/>
+ <path d="M475 205 C420 250 435 330 475 350 C515 330 530 250 475 205Z" fill="#db5848" stroke="#fff2c8" stroke-width="5"/>
+ <path d="M475 207 V348 M442 244 L508 244" stroke="#fff2c8" stroke-width="4" fill="none"/>
+ <path d="M466 351 L484 351 L481 371 L469 371Z" fill="#5b4332"/>
+</g>
+<!-- foreground balloon -->
+<g transform="translate(850 35)">
+ <ellipse cx="0" cy="205" rx="210" ry="245" fill="#263b45" opacity=".22" filter="url(#shadow)"/>
+ <path d="M0 0 C-185 105 -185 355 0 440 C185 355 185 105 0 0Z" fill="url(#balloon)" stroke="#fff3d1" stroke-width="12"/>
+ <path d="M0 8 V435 M-120 60 Q-35 215 -15 425 M120 60 Q35 215 15 425 M-178 180 H178 M-155 300 H155" fill="none" stroke="#fff2ce" stroke-width="8" opacity=".8"/>
+ <path d="M-25 440 H25 L17 485 H-17Z" fill="#594534"/>
+ <path d="M-15 486 H15 V515 H-15Z" fill="#3c3028"/>
+</g>
+<!-- title band -->
+<path d="M0 520 Q300 475 600 515 T1200 500 V790 Q900 820 600 780 T0 810Z" fill="#073f46" opacity=".86"/>
+<text x="72" y="120" fill="#083f45" font-family="Arial,sans-serif" font-size="38" font-weight="700">ТУР В ЛЕТО С НАВИГАТОР</text>
+<text x="65" y="675" fill="#fff8e8" font-family="Arial,sans-serif" font-size="116" font-weight="800">КУАНГЧИ</text>
+<text x="75" y="750" fill="#ffd66b" font-family="Arial,sans-serif" font-size="42" font-weight="700">НЕДЕЛЯ КУЛЬТУРЫ И ТУРИЗМА</text>
+<text x="75" y="820" fill="#fff" font-family="Arial,sans-serif" font-size="38" font-weight="700">24–30 НОЯБРЯ 2026</text>
+<!-- information panel -->
+<rect x="48" y="875" width="1104" height="380" rx="32" fill="#fff9e9" opacity=".97"/>
+<text x="88" y="940" fill="#0c5960" font-family="Arial,sans-serif" font-size="38" font-weight="700">ГЛАВНЫЕ СОБЫТИЯ</text>
+<g font-family="Arial,sans-serif" font-size="28" fill="#21474a">
+ <text x="90" y="1005" font-weight="700">24 ноября</text><text x="300" y="1005">Открытие и праздничная программа</text>
+ <text x="90" y="1065" font-weight="700">24–25 ноября</text><text x="300" y="1065">Гастрономическая площадка</text>
+ <text x="90" y="1125" font-weight="700">25 ноября</text><text x="300" y="1125">Концерты Bức Tường и Microwave</text>
+ <text x="90" y="1185" font-weight="700">27–29 ноября</text><text x="300" y="1185">Международный фестиваль воздушных шаров</text>
+</g>
+<path d="M80 1210 H1120" stroke="#d6b77b" stroke-width="3"/>
+<text x="600" y="1248" text-anchor="middle" fill="#0c5960" font-family="Arial,sans-serif" font-size="25" font-weight="700">ИСТОРИЯ • ПРИРОДА • КУЛЬТУРА ЦЕНТРАЛЬНОГО ВЬЕТНАМА</text>
+</svg>
