@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="900" viewBox="0 0 1200 900">
+<defs><linearGradient id="sky" x2="0" y2="1"><stop stop-color="#62c9ed"/><stop offset="1" stop-color="#ffe3a0"/></linearGradient><linearGradient id="sea" x2="0" y2="1"><stop stop-color="#20a9b5"/><stop offset="1" stop-color="#075a75"/></linearGradient></defs>
+<rect width="1200" height="900" fill="url(#sky)"/><circle cx="990" cy="120" r="65" fill="#fff3bd"/>
+<path d="M0 510 Q140 340 270 430 T520 390 T820 430 T1200 350 V900 H0Z" fill="#387d62"/>
+<path d="M0 610 Q180 480 360 590 T730 530 T1200 570 V900 H0Z" fill="#1b6956"/>
+<path d="M0 650 Q240 620 450 660 T850 640 T1200 670 V900 H0Z" fill="url(#sea)"/>
+<path d="M0 755 Q220 710 450 755 T900 740 T1200 770 V900 H0Z" fill="#f2d49a"/>
+<g fill="#e84f48" stroke="#fff" stroke-width="5"><path d="M210 150 Q270 95 330 150 Q330 235 270 260 Q210 235 210 150Z"/><path d="M520 90 Q575 35 630 90 Q630 165 575 190 Q520 165 520 90Z"/><path d="M850 210 Q905 150 960 210 Q960 285 905 310 Q850 285 850 210Z"/></g>
+<g stroke="#fff" stroke-width="3" fill="none"><path d="M270 260 L270 315"/><path d="M575 190 L575 245"/><path d="M905 310 L905 365"/></g>
+<g font-family="Arial,sans-serif" text-anchor="middle" fill="#083c4b"><text x="600" y="390" font-size="34" font-weight="bold">ТУР В ЛЕТО С НАВИГАТОР</text><text x="600" y="485" font-size="88" font-weight="bold" fill="#fff" stroke="#075a75" stroke-width="2" paint-order="stroke">КУАНГЧИ</text><text x="600" y="545" font-size="34" font-weight="bold" fill="#fff">НЕДЕЛЯ КУЛЬТУРЫ И ТУРИЗМА</text><text x="600" y="605" font-size="34" font-weight="bold" fill="#fff">24–30 НОЯБРЯ 2026</text><text x="600" y="840" font-size="28" font-weight="bold" fill="#083c4b">ФЕСТИВАЛЬ ВОЗДУШНЫХ ШАРОВ • 27–29 НОЯБРЯ</text></g>
+</svg>
