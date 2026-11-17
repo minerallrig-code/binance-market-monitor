@@ -2,6 +2,7 @@ import base64
 import json
 import os
 import sys
+import subprocess
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -121,16 +122,35 @@ def load_approved_items():
         raise ValueError("GITHUB_EVENT_PATH is missing")
     event = json.loads(Path(event_path).read_text(encoding="utf-8"))
     paths = []
+
+    # Use the push range; the commits array may be absent in API-generated pushes.
+    before = event.get("before")
+    after = event.get("after") or os.environ.get("GITHUB_SHA")
+    zero_sha = "0" * 40
+    if after:
+        if before and before != zero_sha:
+            command = ["git", "diff", "--name-only", f"{before}..{after}"]
+        else:
+            command = ["git", "show", "--pretty=", "--name-only", after]
+        result = subprocess.run(command, check=True, capture_output=True, text=True)
+        paths.extend(line.strip() for line in result.stdout.splitlines() if line.strip())
+
+    # Retain the event commit list as a fallback.
     for commit in event.get("commits", []):
         paths.extend(commit.get("added", []))
         paths.extend(commit.get("modified", []))
+
     approved = [
         path for path in dict.fromkeys(paths)
         if path.startswith("projects/turvleto-news/approved/")
         and path.endswith(".json")
     ]
     if not approved:
-        raise ValueError("No newly approved Turvleto news JSON found in this push")
+        raise ValueError(
+            "No approved news JSON found in push diff; "
+            f"before={before!r}, after={after!r}, "
+            f"event_commits={len(event.get('commits', []))}"
+        )
     return approved
 
 
