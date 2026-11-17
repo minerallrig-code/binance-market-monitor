@@ -1,0 +1,46 @@
+name: Turvleto News Publisher
+
+on:
+  workflow_dispatch:
+    inputs:
+      news_text:
+        description: "Полный текст новости на русском языке"
+        required: true
+        type: string
+      image_url:
+        description: "Прямая HTTPS-ссылка на изображение (необязательно)"
+        required: false
+        type: string
+      source_url:
+        description: "Ссылка на источник (необязательно)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependency
+        run: pip install requests
+
+      - name: Publish news to Telegram
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
+          TELEGRAM_CHAT_ID: '-1003065943939'
+          TELEGRAM_MESSAGE_THREAD_ID: '114'
+          NEWS_TEXT: ${{ inputs.news_text }}
+          NEWS_IMAGE_URL: ${{ inputs.image_url }}
+          NEWS_SOURCE_URL: ${{ inputs.source_url }}
+        run: python projects/turvleto-news/publish_news.py
