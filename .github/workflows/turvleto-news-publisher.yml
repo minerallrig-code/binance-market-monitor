@@ -22,7 +22,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependency
-        run: pip install requests
+        run: pip install requests cairosvg
 
       - name: Publish user-approved news to Telegram
         env:
