@@ -64,7 +64,7 @@ def split_text(text, limit=MESSAGE_LIMIT):
     return parts
 
 
-def publish(text, image_url=None, image_base64=None, source_url=None):
+def publish(text, image_url=None, image_base64=None, image_svg_path=None, source_url=None):
     text = (text or "").strip()
     if not text:
         raise ValueError("news text is required")
@@ -74,7 +74,21 @@ def publish(text, image_url=None, image_base64=None, source_url=None):
     if source_url and source_url not in text:
         text = f"{text}\n\nИсточник: {source_url}"
 
-    if image_base64:
+    if image_svg_path:
+        import cairosvg
+        svg_path = Path(image_svg_path)
+        if not svg_path.is_file():
+            raise FileNotFoundError(f"Image SVG not found: {image_svg_path}")
+        image_bytes = cairosvg.svg2png(url=str(svg_path), output_width=1200)
+        caption = text[:CAPTION_LIMIT]
+        telegram(
+            "sendPhoto",
+            {**base_data(), "caption": caption},
+            files={"photo": ("turvleto-quang-tri.png", image_bytes, "image/png")},
+        )
+        print("Telegram confirmed photo + caption.")
+        remainder = text[CAPTION_LIMIT:].strip()
+    elif image_base64:
         image_bytes = base64.b64decode(image_base64, validate=True)
         if not image_bytes:
             raise ValueError("image_base64 decoded to an empty file")
@@ -128,6 +142,7 @@ def main():
             text=item.get("text", ""),
             image_url=item.get("image_url"),
             image_base64=item.get("image_base64"),
+            image_svg_path=item.get("image_svg_path"),
             source_url=item.get("source_url"),
         )
 
