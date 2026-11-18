@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#39b9d8"/><stop offset="1" stop-color="#d7f4ee"/></linearGradient>
+ <linearGradient id="sea" x2="0" y2="1"><stop stop-color="#13b8c5"/><stop offset="1" stop-color="#087d9d"/></linearGradient>
+ <linearGradient id="gold" x2="0" y2="1"><stop stop-color="#fff0a3"/><stop offset=".45" stop-color="#f5c34b"/><stop offset="1" stop-color="#b87818"/></linearGradient>
+</defs>
+<rect width="1200" height="675" fill="url(#sky)"/>
+<circle cx="990" cy="125" r="68" fill="#fff4b0" opacity=".95"/>
+<path d="M0 410 Q180 300 360 400 T720 390 T1200 360 V675 H0Z" fill="#247d65"/>
+<path d="M0 450 Q220 360 440 450 T880 420 T1200 405 V675 H0Z" fill="#155e57"/>
+<rect y="450" width="1200" height="225" fill="url(#sea)"/>
+<path d="M0 520 Q180 500 360 525 T720 515 T1200 525" stroke="#b5f2e8" stroke-width="8" fill="none" opacity=".7"/>
+<path d="M0 595 Q180 570 380 600 T780 590 T1200 600" stroke="#a5eee5" stroke-width="5" fill="none" opacity=".5"/>
+<path d="M0 0 Q90 100 120 240 Q130 130 215 75 Q145 180 150 300 Q90 215 0 190Z" fill="#17694c"/>
+<path d="M1200 0 Q1080 90 1070 220 Q1050 120 970 80 Q1050 170 1040 290 Q1110 200 1200 185Z" fill="#17694c"/>
+<g fill="none" stroke="#17694c" stroke-width="14" stroke-linecap="round"><path d="M90 675 Q125 500 115 250"/><path d="M1110 675 Q1075 500 1085 250"/></g>
+<g fill="#f5d05b"><path d="M90 260 Q5 175 0 130 Q85 160 110 235 Q125 150 205 115 Q190 205 120 260 Q205 235 250 260 Q170 300 110 275Z"/><path d="M1110 260 Q1195 175 1200 130 Q1115 160 1090 235 Q1075 150 995 115 Q1010 205 1080 260 Q995 235 950 260 Q1030 300 1090 275Z"/></g>
+<text x="600" y="220" text-anchor="middle" font-family="Arial,sans-serif" font-size="104" font-weight="900" letter-spacing="2" fill="url(#gold)" stroke="#8b5b16" stroke-width="2" paint-order="stroke">ТУР В ЛЕТО</text>
+<path d="M280 252 Q600 285 920 252" stroke="#f5d05b" stroke-width="9" fill="none" stroke-linecap="round"/>
+<rect x="190" y="315" width="820" height="78" rx="39" fill="#087f7b" opacity=".92"/>
+<text x="600" y="367" text-anchor="middle" font-family="Arial,sans-serif" font-size="39" font-weight="700" fill="#fff">ЭКСКУРСИИ И ОТДЫХ ВО ВЬЕТНАМЕ</text>
+<text x="600" y="635" text-anchor="middle" font-family="Arial,sans-serif" font-size="27" font-weight="700" fill="#fff" stroke="#07596a" stroke-width="1" paint-order="stroke">НАЧНИТЕ СВОЁ ПУТЕШЕСТВИЕ С НАМИ</text>
+</svg>
