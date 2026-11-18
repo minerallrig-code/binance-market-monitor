@@ -63,8 +63,7 @@ jobs:
         working-directory: projects/turvleto-weather
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
-          TELEGRAM_CHAT_ID: '-1003065943939'
-          TELEGRAM_MESSAGE_THREAD_ID: '114'
+          TELEGRAM_CHAT_ID: '@turvletoVN'
         run: python weather_post.py
       - name: Keep the rendered card for review
         if: always()
