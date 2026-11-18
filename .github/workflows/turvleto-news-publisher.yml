@@ -29,7 +29,7 @@ jobs:
       - name: Publish user-approved news to Telegram
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.NEWS_BOT }}
-          TELEGRAM_CHAT_ID: "-1003065943939"
-          TELEGRAM_MESSAGE_THREAD_ID: "114"
+          TELEGRAM_CHAT_ID: "@turvletoVN"
+          TELEGRAM_MESSAGE_THREAD_ID: ""
           GITHUB_EVENT_PATH: ${{ github.event_path }}
         run: python projects/turvleto-news/publish_news.py
