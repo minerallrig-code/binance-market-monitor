@@ -70,50 +70,50 @@ def publish(text, image_url=None, image_base64=None, image_svg_path=None, source
     if not text:
         raise ValueError("news text is required")
 
+    # source_url is metadata for the approved item, not text to append to the Telegram post.
+    # Appending it after hashtags can push the final link into a detached extra message.
     source_url = require_https_url(source_url, "source_url")
     image_url = require_https_url(image_url, "image_url")
-    if source_url and source_url not in text:
-        text = f"{text}\n\nИсточник: {source_url}"
 
-    if image_svg_path:
-        import cairosvg
-        svg_path = Path(image_svg_path)
-        if not svg_path.is_file():
-            raise FileNotFoundError(f"Image SVG not found: {image_svg_path}")
-        image_bytes = cairosvg.svg2png(url=str(svg_path), output_width=1200)
-        caption = text[:CAPTION_LIMIT]
-        telegram(
-            "sendPhoto",
-            {**base_data(), "caption": caption},
-            files={"photo": ("turvleto-quang-tri.png", image_bytes, "image/png")},
-        )
-        print("Telegram confirmed photo + caption.")
-        remainder = text[CAPTION_LIMIT:].strip()
-    elif image_base64:
-        image_bytes = base64.b64decode(image_base64, validate=True)
-        if not image_bytes:
-            raise ValueError("image_base64 decoded to an empty file")
-        caption = text[:CAPTION_LIMIT]
-        telegram(
-            "sendPhoto",
-            {**base_data(), "caption": caption},
-            files={"photo": ("turvleto-news.jpg", image_bytes, "image/jpeg")},
-        )
-        print("Telegram confirmed photo + caption.")
-        remainder = text[CAPTION_LIMIT:].strip()
-    elif image_url:
-        caption = text[:CAPTION_LIMIT]
-        telegram("sendPhoto", {**base_data(), "photo": image_url, "caption": caption})
-        print("Telegram confirmed photo + caption.")
-        remainder = text[CAPTION_LIMIT:].strip()
+    if image_svg_path or image_base64 or image_url:
+        # Keep the image caption short and send the complete post as one text message.
+        # This avoids splitting the final CTA, URL, or hashtags away from the post.
+        if image_svg_path:
+            import cairosvg
+            svg_path = Path(image_svg_path)
+            if not svg_path.is_file():
+                raise FileNotFoundError(f"Image SVG not found: {image_svg_path}")
+            image_bytes = cairosvg.svg2png(url=str(svg_path), output_width=1200)
+            telegram(
+                "sendPhoto",
+                {**base_data(), "caption": text.splitlines()[0][:CAPTION_LIMIT]},
+                files={"photo": ("turvleto-brand.png", image_bytes, "image/png")},
+            )
+        elif image_base64:
+            image_bytes = base64.b64decode(image_base64, validate=True)
+            if not image_bytes:
+                raise ValueError("image_base64 decoded to an empty file")
+            telegram(
+                "sendPhoto",
+                {**base_data(), "caption": text.splitlines()[0][:CAPTION_LIMIT]},
+                files={"photo": ("turvleto-news.jpg", image_bytes, "image/jpeg")},
+            )
+        else:
+            telegram(
+                "sendPhoto",
+                {**base_data(), "photo": image_url, "caption": text.splitlines()[0][:CAPTION_LIMIT]},
+            )
+        print("Telegram confirmed photo with short title caption.")
+        remainder = text
     else:
         remainder = text
         print("No image supplied; text-only publication.")
 
     if remainder:
-        for part in split_text(remainder):
+        parts = split_text(remainder)
+        for part in parts:
             telegram("sendMessage", {**base_data(), "text": part})
-        print("Telegram confirmed text continuation.")
+        print(f"Telegram confirmed {len(parts)} text message(s).")
 
 
 def load_approved_items():
