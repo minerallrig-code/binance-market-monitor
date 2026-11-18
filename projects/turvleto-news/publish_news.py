@@ -104,7 +104,10 @@ def publish(text, image_url=None, image_base64=None, image_svg_path=None, source
                 {**base_data(), "photo": image_url, "caption": text.splitlines()[0][:CAPTION_LIMIT]},
             )
         print("Telegram confirmed photo with short title caption.")
-        remainder = text
+        # The first line is used as the photo caption only.
+        # Send the body without repeating that title in the following text message.
+        lines = text.splitlines()
+        remainder = "\n".join(lines[1:]).strip()
     else:
         remainder = text
         print("No image supplied; text-only publication.")
