@@ -14,72 +14,8 @@
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 9,
-      "results": [
-        {
-          "time_utc": "2026-11-17T22:00:00+00:00",
-          "entry": 73.63,
-          "max_up_pct_1h": 2.8928,
-          "max_down_pct_1h": -0.2037,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-17T22:15:00+00:00",
-          "entry": 73.81,
-          "max_up_pct_1h": 2.6419,
-          "max_down_pct_1h": -0.0542,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-17T22:30:00+00:00",
-          "entry": 73.94,
-          "max_up_pct_1h": 2.4615,
-          "max_down_pct_1h": -0.1352,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-17T22:45:00+00:00",
-          "entry": 74.04,
-          "max_up_pct_1h": 2.3231,
-          "max_down_pct_1h": -0.1756,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-18T00:00:00+00:00",
-          "entry": 74.88,
-          "max_up_pct_1h": 0.6811,
-          "max_down_pct_1h": -0.3472,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-18T00:15:00+00:00",
-          "entry": 75.18,
-          "max_up_pct_1h": 0.2793,
-          "max_down_pct_1h": -1.0508,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-18T00:30:00+00:00",
-          "entry": 75.11,
-          "max_up_pct_1h": 0.1065,
-          "max_down_pct_1h": -1.105,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-18T00:45:00+00:00",
-          "entry": 74.92,
-          "max_up_pct_1h": 0.0,
-          "max_down_pct_1h": -1.0278,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-18T01:00:00+00:00",
-          "entry": 74.7,
-          "max_up_pct_1h": 0.1874,
-          "max_down_pct_1h": -0.9237,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     }
   }
 }
