@@ -1,5 +1,5 @@
 {
-  "date_vietnam": "2026-11-19",
+  "date_vietnam": "2026-11-20",
   "method": "LONG-only historical signal audit: 1h EMA20/50 trend + 15m close above EMA20, RSI14 50-70 and positive MACD histogram; 5m RSI6/MACD rising is context only. Entry at next 15m open; measure next 1h high/low excursion. No fees, slippage, funding, stop/target or position sizing. Not a profitability backtest.",
   "symbols": {
     "BTCUSDT": {
@@ -14,65 +14,8 @@
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 8,
-      "results": [
-        {
-          "time_utc": "2026-11-19T11:45:00+00:00",
-          "entry": 74.82,
-          "max_up_pct_1h": 0.1203,
-          "max_down_pct_1h": -1.0024,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T13:30:00+00:00",
-          "entry": 74.9,
-          "max_up_pct_1h": 0.9613,
-          "max_down_pct_1h": -0.0134,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T13:45:00+00:00",
-          "entry": 75.13,
-          "max_up_pct_1h": 0.6522,
-          "max_down_pct_1h": -0.5324,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T14:00:00+00:00",
-          "entry": 75.04,
-          "max_up_pct_1h": 0.7729,
-          "max_down_pct_1h": -0.4131,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T14:15:00+00:00",
-          "entry": 75.05,
-          "max_up_pct_1h": 0.7595,
-          "max_down_pct_1h": -0.8927,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T14:30:00+00:00",
-          "entry": 75.3,
-          "max_up_pct_1h": 0.1726,
-          "max_down_pct_1h": -2.3108,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T14:45:00+00:00",
-          "entry": 74.9,
-          "max_up_pct_1h": 0.7076,
-          "max_down_pct_1h": -1.9359,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T15:00:00+00:00",
-          "entry": 74.9,
-          "max_up_pct_1h": 0.0267,
-          "max_down_pct_1h": -2.0027,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     }
   }
 }
