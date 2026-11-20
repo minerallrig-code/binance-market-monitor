@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#073f46"/>
+    <stop offset="1" stop-color="#0c8586"/>
+  </linearGradient>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#ffe29a"/>
+    <stop offset="1" stop-color="#e6ad43"/>
+  </linearGradient>
+  <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="12"/>
+  </filter>
+</defs>
+<rect width="1200" height="675" fill="url(#bg)"/>
+<circle cx="1030" cy="100" r="180" fill="#ffffff" opacity=".05"/>
+<circle cx="140" cy="620" r="230" fill="#ffffff" opacity=".04"/>
+<path d="M0 505 Q260 440 520 505 T1200 470 V675 H0Z" fill="#052f38" opacity=".42"/>
+<text x="64" y="70" fill="#f7d98c" font-family="Arial,sans-serif" font-size="27" font-weight="700" letter-spacing="2">ТУР В ЛЕТО С НАВИГАТОРОМ</text>
+<text x="64" y="174" fill="#ffffff" font-family="Arial,sans-serif" font-size="68" font-weight="800">ТАКСИ ВО ВЬЕТНАМЕ</text>
+<text x="66" y="235" fill="#ffdc8b" font-family="Arial,sans-serif" font-size="39" font-weight="700">ПРОВЕРЬТЕ МАШИНУ И ВОДИТЕЛЯ</text>
+<!-- phone shadow -->
+<rect x="800" y="285" width="250" height="340" rx="35" fill="#001f26" opacity=".35" filter="url(#shadow)"/>
+<!-- phone -->
+<rect x="790" y="270" width="250" height="340" rx="34" fill="#f8f5eb" stroke="#e9c16b" stroke-width="7"/>
+<rect x="812" y="302" width="206" height="285" rx="20" fill="#e4f0eb"/>
+<rect x="873" y="282" width="84" height="8" rx="4" fill="#537477"/>
+<text x="915" y="345" text-anchor="middle" fill="#0b5b61" font-family="Arial,sans-serif" font-size="21" font-weight="700">ВАША ПОЕЗДКА</text>
+<rect x="835" y="367" width="160" height="60" rx="12" fill="#ffffff"/>
+<circle cx="865" cy="397" r="18" fill="#0c8586"/>
+<path d="M855 398 L863 406 L877 388" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="892" y="392" fill="#164b50" font-family="Arial,sans-serif" font-size="16" font-weight="700">НОМЕР</text>
+<text x="892" y="414" fill="#164b50" font-family="Arial,sans-serif" font-size="18">проверьте</text>
+<rect x="835" y="442" width="160" height="60" rx="12" fill="#ffffff"/>
+<circle cx="865" cy="472" r="18" fill="#e3ad45"/>
+<path d="M855 472 Q865 458 875 472 Q875 484 865 484 Q855 484 855 472Z" fill="#fff"/>
+<text x="892" y="467" fill="#164b50" font-family="Arial,sans-serif" font-size="16" font-weight="700">ВОДИТЕЛЬ</text>
+<text x="892" y="489" fill="#164b50" font-family="Arial,sans-serif" font-size="18">сверьте фото</text>
+<rect x="835" y="518" width="160" height="45" rx="12" fill="#0c8586"/>
+<text x="915" y="547" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="17" font-weight="700">ВСЁ СОВПАЛО?</text>
+<!-- car -->
+<g transform="translate(160 340)">
+ <ellipse cx="285" cy="220" rx="285" ry="25" fill="#001d24" opacity=".35"/>
+ <path d="M52 146 L104 78 Q123 54 163 54 H355 Q391 54 413 84 L464 146 L505 158 Q532 169 536 200 L536 221 H26 V188 Q27 158 52 146Z" fill="#f4f0df" stroke="#e8c16b" stroke-width="7"/>
+ <path d="M128 83 Q141 69 166 69 H244 V137 H84Z" fill="#75c5c2"/>
+ <path d="M263 69 H350 Q374 69 389 91 L424 137 H263Z" fill="#75c5c2"/>
+ <path d="M27 167 H535" stroke="#0b777b" stroke-width="10"/>
+ <rect x="58" y="153" width="82" height="27" rx="8" fill="#0b777b"/>
+ <rect x="421" y="153" width="75" height="27" rx="8" fill="#e4b34d"/>
+ <circle cx="128" cy="216" r="42" fill="#092f38"/><circle cx="128" cy="216" r="19" fill="#d8d9cf"/>
+ <circle cx="430" cy="216" r="42" fill="#092f38"/><circle cx="430" cy="216" r="19" fill="#d8d9cf"/>
+ <rect x="235" y="19" width="90" height="35" rx="10" fill="url(#gold)"/>
+ <text x="280" y="43" text-anchor="middle" fill="#16464a" font-family="Arial,sans-serif" font-size="19" font-weight="800">TAXI</text>
+</g>
+<text x="66" y="590" fill="#ffffff" font-family="Arial,sans-serif" font-size="29" font-weight="700">Сверьте номер авто • имя и фото водителя</text>
+<text x="66" y="635" fill="#f8d98c" font-family="Arial,sans-serif" font-size="23">Не садитесь к человеку, которого нет в вашем заказе</text>
+</svg>
