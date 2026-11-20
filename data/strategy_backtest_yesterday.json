@@ -14,29 +14,8 @@
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 24,
+      "signals": 21,
       "results": [
-        {
-          "time_utc": "2026-11-19T00:45:00+00:00",
-          "entry": 73.67,
-          "max_up_pct_1h": 0.2308,
-          "max_down_pct_1h": -1.0588,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T01:00:00+00:00",
-          "entry": 73.56,
-          "max_up_pct_1h": 0.0816,
-          "max_down_pct_1h": -0.9108,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-19T01:30:00+00:00",
-          "entry": 73.4,
-          "max_up_pct_1h": 0.2997,
-          "max_down_pct_1h": -0.4223,
-          "5m_early_turn": false
-        },
         {
           "time_utc": "2026-11-19T03:45:00+00:00",
           "entry": 74.2,
