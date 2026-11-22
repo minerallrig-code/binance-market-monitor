@@ -1,16 +1,67 @@
 {
-  "date_vietnam": "2026-11-21",
+  "date_vietnam": "2026-11-22",
   "method": "LONG-only historical signal audit: 1h EMA20/50 trend + 15m close above EMA20, RSI14 50-70 and positive MACD histogram; 5m RSI6/MACD rising is context only. Entry at next 15m open; measure next 1h high/low excursion. No fees, slippage, funding, stop/target or position sizing. Not a profitability backtest.",
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 0,
-      "results": []
+      "signals": 2,
+      "results": [
+        {
+          "time_utc": "2026-11-22T16:30:00+00:00",
+          "entry": 61315.0,
+          "max_up_pct_1h": 0.0749,
+          "max_down_pct_1h": -0.9534,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-22T16:45:00+00:00",
+          "entry": 61222.2,
+          "max_up_pct_1h": 0.0291,
+          "max_down_pct_1h": -0.8033,
+          "5m_early_turn": false
+        }
+      ]
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 0,
-      "results": []
+      "signals": 5,
+      "results": [
+        {
+          "time_utc": "2026-11-22T15:45:00+00:00",
+          "entry": 1717.29,
+          "max_up_pct_1h": 0.4065,
+          "max_down_pct_1h": -0.117,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-22T16:00:00+00:00",
+          "entry": 1718.59,
+          "max_up_pct_1h": 0.3305,
+          "max_down_pct_1h": -0.4597,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-22T16:15:00+00:00",
+          "entry": 1720.08,
+          "max_up_pct_1h": 0.2436,
+          "max_down_pct_1h": -0.6785,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-22T16:30:00+00:00",
+          "entry": 1722.19,
+          "max_up_pct_1h": 0.0778,
+          "max_down_pct_1h": -0.8001,
+          "5m_early_turn": false
+        },
+        {
+          "time_utc": "2026-11-22T16:45:00+00:00",
+          "entry": 1721.96,
+          "max_up_pct_1h": 0.0476,
+          "max_down_pct_1h": -0.7869,
+          "5m_early_turn": false
+        }
+      ]
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
