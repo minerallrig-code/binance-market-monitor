@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+<defs>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#8ed9df"/><stop offset="1" stop-color="#e8f4d7"/></linearGradient>
+ <linearGradient id="water" x2="0" y2="1"><stop stop-color="#43b9ad"/><stop offset="1" stop-color="#126c72"/></linearGradient>
+ <linearGradient id="hill" x2="0" y2="1"><stop stop-color="#397e56"/><stop offset="1" stop-color="#174b3e"/></linearGradient>
+</defs>
+<rect width="1200" height="675" fill="url(#sky)"/>
+<circle cx="955" cy="128" r="64" fill="#f5d88a" opacity=".9"/>
+<path d="M0 390 L110 245 210 320 350 175 500 345 650 205 790 350 925 210 1080 335 1200 240 1200 520 0 520Z" fill="#6da77a"/>
+<path d="M0 430 L125 280 235 370 375 220 520 405 660 260 805 405 950 255 1100 395 1200 300 1200 545 0 545Z" fill="url(#hill)"/>
+<path d="M0 455 Q180 420 330 470 T650 470 T950 450 T1200 470 L1200 675 0 675Z" fill="url(#water)"/>
+<path d="M0 535 Q200 495 380 535 T760 530 T1200 520" fill="none" stroke="#b7e8d6" stroke-width="5" opacity=".7"/>
+<path d="M0 585 Q230 545 450 585 T900 580 T1200 565" fill="none" stroke="#b7e8d6" stroke-width="3" opacity=".45"/>
+<g transform="translate(470 440)">
+ <path d="M0 65 Q95 92 205 65 L175 100 Q90 118 25 95Z" fill="#8a4d2c"/>
+ <path d="M42 60 L42 0 Q110 -10 160 8 L160 60Z" fill="#e8e2c8" stroke="#765a3a" stroke-width="5"/>
+ <path d="M35 8 Q100 -18 168 8" fill="none" stroke="#765a3a" stroke-width="7"/>
+ <rect x="91" y="-8" width="5" height="78" fill="#765a3a"/>
+</g>
+<g opacity=".75" fill="#d7e9b9"><path d="M70 420q25-55 50 0q25-65 50 0z"/><path d="M1020 410q25-55 50 0q25-65 50 0z"/></g>
+<rect x="48" y="48" width="1104" height="579" rx="28" fill="none" stroke="#f5d88a" stroke-width="5" opacity=".9"/>
+<rect x="75" y="500" width="500" height="105" rx="18" fill="#073e42" opacity=".84"/>
+<text x="105" y="548" font-family="Arial,sans-serif" font-size="37" font-weight="700" fill="#fff">ФОНГНЯ — ДЫХАНИЕ ПРИРОДЫ</text>
+<text x="105" y="582" font-family="Arial,sans-serif" font-size="21" fill="#f5d88a">ТУР В ЛЕТО • ВЬЕТНАМ</text>
+</svg>
