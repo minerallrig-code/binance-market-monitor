@@ -4,43 +4,13 @@
   "symbols": {
     "BTCUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 2,
-      "results": [
-        {
-          "time_utc": "2026-11-27T06:15:00+00:00",
-          "entry": 61703.5,
-          "max_up_pct_1h": 0.2763,
-          "max_down_pct_1h": -0.1488,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-27T06:30:00+00:00",
-          "entry": 61664.0,
-          "max_up_pct_1h": 0.3406,
-          "max_down_pct_1h": -0.3371,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     },
     "ETHUSDT": {
       "data_source": "OKX public swap history",
-      "signals": 2,
-      "results": [
-        {
-          "time_utc": "2026-11-27T06:00:00+00:00",
-          "entry": 1741.04,
-          "max_up_pct_1h": 0.0224,
-          "max_down_pct_1h": -0.5887,
-          "5m_early_turn": false
-        },
-        {
-          "time_utc": "2026-11-27T06:15:00+00:00",
-          "entry": 1735.87,
-          "max_up_pct_1h": 0.0956,
-          "max_down_pct_1h": -0.2926,
-          "5m_early_turn": false
-        }
-      ]
+      "signals": 0,
+      "results": []
     },
     "SOLUSDT": {
       "data_source": "OKX public swap history",
